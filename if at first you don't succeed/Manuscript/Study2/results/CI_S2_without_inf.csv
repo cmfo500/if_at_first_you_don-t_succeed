@@ -1,0 +1,40 @@
+,effect,group,term,estimate,std.error,statistic,p.value,conf.low,conf.high,sig
+1,fixed,NA,(Intercept),6.051,0.017,347.667,0.000,6.016,6.087,survive
+2,fixed,NA,Block2-1,-0.009,0.004,-2.135,0.037,-0.018,-0.001,does not survive
+3,fixed,NA,Block3-2,-0.002,0.004,-0.620,0.538,-0.010,0.005,does not survive
+4,fixed,NA,Block4-3,0.006,0.004,1.397,0.167,-0.002,0.014,does not survive
+5,fixed,NA,Block5-4,-0.021,0.004,-5.099,0.000,-0.029,-0.012,survive
+6,fixed,NA,Probability1,0.039,0.002,21.674,0.000,0.035,0.043,survive
+7,fixed,NA,Session1,-0.045,0.003,-14.568,0.000,-0.051,-0.039,survive
+8,fixed,NA,Session2,-0.020,0.004,-5.271,0.000,-0.028,-0.012,survive
+9,fixed,NA,Block2-1:Probability1,0.014,0.003,5.438,0.000,0.009,0.019,survive
+10,fixed,NA,Block3-2:Probability1,0.010,0.003,4.042,0.000,0.005,0.015,survive
+11,fixed,NA,Block4-3:Probability1,0.021,0.003,8.047,0.000,0.016,0.027,survive
+12,fixed,NA,Block5-4:Probability1,-0.008,0.003,-2.763,0.006,-0.013,-0.002,does not survive
+13,fixed,NA,Block2-1:Session1,0.013,0.002,7.406,0.000,0.010,0.017,survive
+14,fixed,NA,Block3-2:Session1,0.001,0.002,0.828,0.408,-0.002,0.005,does not survive
+15,fixed,NA,Block4-3:Session1,-0.001,0.002,-0.442,0.659,-0.005,0.003,does not survive
+16,fixed,NA,Block5-4:Session1,0.003,0.002,1.524,0.128,-0.001,0.007,does not survive
+17,fixed,NA,Block2-1:Session2,0.004,0.003,1.404,0.160,-0.002,0.010,does not survive
+18,fixed,NA,Block3-2:Session2,0.003,0.003,0.954,0.340,-0.003,0.009,does not survive
+19,fixed,NA,Block4-3:Session2,0.001,0.003,0.257,0.797,-0.006,0.007,does not survive
+20,fixed,NA,Block5-4:Session2,-0.007,0.003,-2.185,0.029,-0.014,-0.001,does not survive
+21,fixed,NA,Probability1:Session1,0.004,0.001,6.757,0.000,0.003,0.005,survive
+22,fixed,NA,Probability1:Session2,0.003,0.001,2.556,0.011,0.001,0.005,does not survive
+23,fixed,NA,Block2-1:Probability1:Session1,0.001,0.002,0.367,0.714,-0.003,0.004,does not survive
+24,fixed,NA,Block3-2:Probability1:Session1,0.005,0.002,2.644,0.008,0.001,0.008,does not survive
+25,fixed,NA,Block4-3:Probability1:Session1,-0.005,0.002,-2.427,0.015,-0.008,-0.001,does not survive
+26,fixed,NA,Block5-4:Probability1:Session1,0.001,0.002,0.331,0.741,-0.003,0.004,does not survive
+27,fixed,NA,Block2-1:Probability1:Session2,-0.002,0.003,-0.668,0.504,-0.008,0.004,does not survive
+28,fixed,NA,Block3-2:Probability1:Session2,0.002,0.003,0.494,0.621,-0.005,0.008,does not survive
+29,fixed,NA,Block4-3:Probability1:Session2,0.002,0.003,0.516,0.606,-0.005,0.008,does not survive
+30,fixed,NA,Block5-4:Probability1:Session2,-0.001,0.003,-0.403,0.687,-0.008,0.005,does not survive
+,,,,,Variance,,,,,SD
+31,ran_pars,Participant,sd__(Intercept),,0.0004,,,,,0.113
+39,ran_pars,Participant,sd__Session1,,0.0006,,,,,0.019
+46,ran_pars,Participant,sd__Session2,,0.0006,,,,,0.024
+52,ran_pars,Participant,sd__Block2-1,,0.0004,,,,,0.024
+57,ran_pars,Participant,sd__Block3-2,,0.0004,,,,,0.020
+61,ran_pars,Participant,sd__Block4-3,,0.0004,,,,,0.020
+64,ran_pars,Participant,sd__Block5-4,,0.0001,,,,,0.019
+66,ran_pars,Participant,sd__Probability1,,0.0410,,,,,0.010

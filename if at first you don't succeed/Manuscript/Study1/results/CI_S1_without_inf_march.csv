@@ -1,0 +1,34 @@
+term,estimate,std.error,statistic,p.value,conf.low,conf.high,HB.value,sig
+(Intercept),6.074,0.013,474.610,0.000,6.049,6.100,0.003,survive
+Epoch2-1,-0.019,0.004,-4.259,0.000,-0.028,-0.010,0.004,survive
+Epoch3-2,0.008,0.004,2.130,0.035,0.001,0.015,0.007,does not survive
+Epoch4-3,-0.010,0.003,-3.001,0.003,-0.017,-0.004,0.005,survive
+Epoch5-4,-0.019,0.004,-4.921,0.000,-0.026,-0.011,0.003,survive
+Probability1,0.024,0.001,15.806,0.000,0.021,0.027,0.003,survive
+Session1,0.061,0.004,16.080,0.000,0.054,0.069,0.003,survive
+Epoch2-1:Probability1,0.011,0.002,5.020,0.000,0.007,0.016,0.003,survive
+Epoch3-2:Probability1,0.012,0.002,5.018,0.000,0.007,0.016,0.003,survive
+Epoch4-3:Probability1,0.005,0.002,2.309,0.021,0.001,0.010,0.005,does not survive
+Epoch5-4:Probability1,0.004,0.002,1.653,0.098,-0.001,0.008,0.008,does not survive
+Epoch2-1:Session1,-0.017,0.004,-3.816,0.000,-0.025,-0.008,0.004,survive
+Epoch3-2:Session1,-0.004,0.003,-1.392,0.166,-0.010,0.002,0.013,does not survive
+Epoch4-3:Session1,-0.012,0.003,-3.398,0.001,-0.019,-0.005,0.004,survive
+Epoch5-4:Session1,-0.008,0.003,-2.328,0.021,-0.015,-0.001,0.006,does not survive
+Probability1:Session1,-0.002,0.001,-2.297,0.022,-0.003,0.000,0.006,does not survive
+Epoch2-1:Probability1:Session1,0.001,0.002,0.618,0.537,-0.003,0.006,0.017,does not survive
+Epoch3-2:Probability1:Session1,-0.001,0.002,-0.396,0.692,-0.005,0.004,0.025,does not survive
+Epoch4-3:Probability1:Session1,-0.004,0.002,-1.638,0.102,-0.008,0.001,0.010,does not survive
+Epoch5-4:Probability1:Session1,0.000,0.002,0.079,0.937,-0.004,0.005,0.050,does not survive
+,,,,,,,,
+,Variance,,,,,SD,,
+Participant (Intercept),0.0156,,,,,0.1250,,
+Participant:Session1,0.0013,,,,,0.0360,,
+Participant:Epoch2-1,0.0014,,,,,0.0372,,
+Participant:Epoch3-2,0.0008,,,,,0.0291,,
+Participant:Epoch4-3,0.0006,,,,,0.0248,,
+Participant:Epoch5-4,0.0008,,,,,0.0286,,
+Participant:Probability1,0.0002,,,,,0.0127,,
+Participant:Session1:Epoch2-1,0.0013,,,,,0.0361,,
+Participant:Session1:Epoch3-2,0.0004,,,,,0.0203,,
+Participant:Session1:Epoch4-3,0.0006,,,,,0.0254,,
+Participant:Session1:Epoch5-4,0.0006,,,,,0.0252,,

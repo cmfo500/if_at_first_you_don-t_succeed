@@ -1,0 +1,277 @@
+---
+title: "Supplementary experiment vs experiment 2 - Online vs in person testing - Data analysis; Reliability of the Serial Reaction Time task: If at first you don't succeed, try try try again"
+author: "Cátia Margarida Oliveira, Marianna E. Hayiou-Thomas, Lisa Henderson; University of York"
+output:
+    html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Importing libraries
+
+```{r echo = T,warning=FALSE,message=FALSE}
+library(tidyverse)
+library(dplyr)
+library(lme4)
+library(lmerTest)
+```
+
+### Holm-Bonferroni correction
+
+```{r}
+
+HB.correction <- function(alpha, p.value){
+       n <- length(na.omit(p.value))
+		   HB.pvalue <- alpha/(n - rank(p.value) + 1)
+	       
+}
+```
+
+# Data cleaning
+
+```{r echo = F, results = 'hide',warning=FALSE,message=FALSE}
+
+# Read in file
+Data_study2 <- read.csv("../data/Study2_trimmed.csv", header = TRUE)
+
+Data_study2$Probability[Data_study2$Probability == 2] <- "Prob"
+Data_study2$Probability[Data_study2$Probability == 1] <- "Improb"
+
+Data_study3 <- read.csv("../data/SuppExp_trimmed.csv", header = TRUE)
+
+#add testing condition
+
+Data_study2$testing <- "in person"
+Data_study3$testing <- "online"
+
+#select only comparable conditions
+#select only 2 sessions
+
+Data_study2 <- subset(Data_study2, Session != 3)
+
+#select only those in no ISI group
+Data_study3 <- subset(Data_study3, Group == "noISI")
+
+#selecting only relevant columns to merge
+
+Data_study2 <- select(Data_study2, Participant, testing, Probability, RT, Session, Block)
+Data_study3 <- select(Data_study3, Participant, testing, Probability, RT, Session, Block)
+
+#merging dataframes
+
+Data <- rbind(Data_study2, Data_study3)
+
+#Model with log transformation --------------------------------
+
+Data$logRT <- log(Data$RT)
+
+#Descriptive statistics
+
+RT <- Data %>%
+  group_by(Probability, Block, Session, testing) %>%
+  summarise(mean = mean(RT, na.rm = TRUE),
+            sd = sd(RT, na.rm = TRUE),
+            n = n()) %>%
+  mutate(se = sd / sqrt(n),
+         lower.ci= mean - qt(1 - (0.05 / 2), n - 1) * se,
+         upper.ci = mean + qt(1 - (0.05 / 2), n - 1) * se)
+
+```
+
+## Descriptive statistics
+
+```{r echo = F}
+
+print(RT)
+```
+
+# Plotting
+
+```{r echo = F, results = 'hide',warning=FALSE,message=FALSE}
+
+RT <- RT %>% 
+  mutate(series = interaction(Probability, testing, sep = "_"))
+
+plot <- ggplot(RT,
+       aes(x = Block, 
+           y = mean, group =series,
+           color = Probability)) + 
+  geom_line(aes(linetype = testing), position=position_dodge(0.05), size = 1) +
+  geom_errorbar(aes(ymin=lower.ci, ymax=upper.ci), width=.05, 
+                position=position_dodge(0.05),
+                show.legend = FALSE) +
+  facet_wrap(~ Session, scales="free") + coord_cartesian(ylim = c(380, 550)) +
+  theme_classic()
+
+plot <- plot + ylab("mean RT") + xlab("Epoch")
+
+# Save plot
+png("../plots/Procedural_learning.png",  width = 750, height = 675)
+print(plot)
+dev.off()
+```
+
+# Modelling
+
+```{r echo = F, results = 'hide',warning=FALSE,message=FALSE}
+#Contrasts -----------------------------------------------------------------
+
+#.......... Factor - Session
+Data$Session <- as.factor(Data$Session)
+contrasts(Data$Session) <- cbind(c(1,-1))
+contrasts(Data$Session)
+
+#.......... Factor - Block
+Data$Block <- as.factor(Data$Block)
+contrasts(Data$Block) <- MASS::contr.sdif(5) 
+contrasts(Data$Block)
+
+#.......... Factor - Probability
+Data$Probability <- as.factor(Data$Probability)
+contrasts(Data$Probability) <- c(1, -1)
+contrasts(Data$Probability)
+
+#.......... Factor - Group
+Data$testing <- as.factor(Data$testing)
+contrasts(Data$testing) <- c(1, -1)
+contrasts(Data$testing)
+
+Data$Participant <- as.factor(Data$Participant)
+```
+
+## RT.model
+
+```{r echo = F, results = 'hide',warning=FALSE,message=FALSE}
+
+# Model with block and session as random effects ------------------------
+
+RT.model <- lmer(logRT ~ Probability * Block * Session * testing + (1|Participant), data= Data, REML=FALSE)
+
+```
+
+### Checking Assumptions
+
+```{r eval = F}
+par(mfrow=c(2,2))
+
+#Absence of Homoskedasticity
+plot(fitted(RT.model),residuals(RT.model))
+abline(h = 0, col = "darkorange", lwd = 2)
+#normality of residuals
+hist(residuals(RT.model))
+qqPlot(residuals(RT.model))
+
+#DHARMa plotting
+simulationOutput <- simulateResiduals(fittedModel = RT.model)
+plot(simulationOutput)
+```
+
+## Model 2
+
+```{r eval = F}
+
+RT.model2 <- lmer(logRT ~ Probability*Block*Session*testing + (1+Session*Block+Session*Probability+Block*Probability|Participant), data= Data, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+summary(RT.model2)
+```
+
+## Model 3
+
+```{r eval = F}
+
+RT.model3 <- lmer(logRT ~ Probability*Block*Session*testing + (1+Session*Block+Probability|Participant), data= Data, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+summary(RT.model3)
+```
+
+## Model 4
+
+```{r eval = F}
+
+RT.model4 <- lmer(logRT ~ Probability*Block*Session*testing + (1+Session+Block*Probability|Participant), data= Data, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+summary(RT.model4)
+```
+
+## Model 5
+
+```{r eval = F}
+
+RT.model5 <- lmer(logRT ~ Probability*Block*Session*testing + (1+Session*Probability+Block|Participant), data= Data, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+summary(RT.model5)
+```
+
+## Model 6
+
+```{r echo = F}
+
+RT.model6 <- lmer(logRT ~ Probability*Block*Session*testing + (1+Session+Block+Probability|Participant), data= Data, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+summary(RT.model6) ## **selected**
+```
+
+## Model comparison
+
+```{r eval = F}
+anova(RT.model2, RT.model3, RT.model4, RT.model5, RT.model6)
+```
+
+## Selected model
+
+```{r}
+
+Selected.model <- lmer(logRT ~ Probability*Block*Session*testing + (1+Session+Block+Probability|Participant), data= Data, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+CI.res.3vs2 <- broom.mixed::tidy(Selected.model, conf.int = TRUE)
+write.csv(CI.res.3vs2, "../results/CI.res.study3vs2.csv")
+```
+
+### Influential cases
+
+```{r}
+
+influentialcases <- influence(Selected.model, "Participant")
+
+Zdfbetas = as.data.frame(scale(dfbetas(influentialcases)))
+
+write.csv(Zdfbetas, "../results/zbetas-SEvs2.csv")
+```
+
+### Exclusion of influential participants
+
+```{r}
+
+#Zdfbetas <- read.csv("../results/zbetas-study3vs2.csv")  %>% tibble::column_to_rownames(var = "X")
+
+exclude.S3vs2 <- Zdfbetas %>%
+  filter_all(any_vars(abs(.) > 3.29)) %>% 
+  tibble::rownames_to_column("Participant") 
+
+write.csv(exclude.S3vs2$Participant, "../results/excluded_participants_SEvs2.csv", row.names = FALSE)
+
+# Exclude participants from dataset 
+Data.final <- Data[!Data$Participant %in% exclude.S3vs2$Participant,]
+```
+
+## Final model
+
+```{r}
+
+RT.model.final <- lmer(logRT ~ Probability*Block*Session*testing + (1+Session+Block+Probability|Participant), data= Data.final, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+summary(RT.model.final)
+
+# Model parameters with CI
+CI.without.inf_S3vs2 <- broom.mixed::tidy(RT.model.final, conf.int = TRUE)
+
+# Apply correction for multiple comparisons
+CI.without.inf_S3vs2$HB.value <- HB.correction(.05, CI.without.inf_S3vs2$p.value)
+CI.without.inf_S3vs2$sig <- ifelse(CI.without.inf_S3vs2$p.value < CI.without.inf_S3vs2$HB.value,"survive","does not survive")
+write.csv(CI.without.inf_S3vs2, "../results/CI.without.inf_SEvs2.csv")
+```

@@ -1,0 +1,367 @@
+---
+title: "Study 1 - modelling: Reliability of the Serial Reaction Time task: If at first you don't succeed, try try try again"
+author: "Catia Oliveira, Marianna E. Hayiou-Thomas, Lisa Henderson, University of York"
+output:
+    html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(knitr.duplicate.label = "allow")
+```
+
+```{r echo = T,warning=FALSE,message=FALSE}
+library(rmarkdown)
+library(dplyr)
+library(lme4)
+library(lmerTest)
+library(ggplot2)
+library(influence.ME)
+library(tidyverse)
+```
+
+### Functions: Holm-Bonferroni correction
+
+```{r echo = F}
+
+HB.correction <- function(alpha, p.value){
+        n <- length(na.omit(p.value))
+		   HB.pvalue <- alpha/(n - rank(p.value) + 1)
+	       
+}
+```
+
+# Data preprocessing
+
+```{r echo = F}
+
+# Read in file
+Data <- read.csv("../data/Data_final_RT.csv", header = TRUE)
+Data$logRT <- log(Data$RT)
+
+#separate sessions
+
+Session1_Data <- subset(Data, Session == 1)
+Session2_Data <- subset(Data, Session == 2)
+
+Session1_Prob <- subset(Session1_Data, Probability == 2)
+Session1_Improb <- subset(Session1_Data, Probability == 1)
+Session2_Prob <- subset(Session2_Data, Probability == 2)
+Session2_Improb <- subset(Session2_Data, Probability == 1)
+
+Data_results1 <- aggregate(RT ~Participant, Session1_Data, mean)
+Data_results2 <- aggregate(RT ~Participant, Session2_Data, mean)
+
+#------------------------------------
+
+# PARTICIPANT OUTLIER REMOVAL BASED ON ACCURACY
+
+#--- Same group
+
+#Accuracy
+pptmeanacc <-aggregate(Accuracy ~ Participant, data = Session1_Data, sum)
+pptmeanacc2 <-aggregate(Accuracy ~ Participant, data = Session2_Data, sum)
+
+#Z scores
+
+pptmeanacc$AccZ <-scale(pptmeanacc$Acc, center = TRUE, scale = TRUE)
+pptmeanacc2$AccZ <-scale(pptmeanacc2$Acc, center = TRUE, scale = TRUE)
+
+# PARTICIPANT OUTLIER REMOVAL BASED ON Response Times
+#---- Same group
+
+# Mean response times 
+pptmean_RT1 <-aggregate(RT ~ Participant, data= Session1_Data, mean)
+pptmean_RT2 <-aggregate(RT ~ Participant, data= Session2_Data, mean)
+
+####z scores
+pptmean_RT1$RTZ <-scale(pptmean_RT1$RT, center = TRUE, scale = TRUE)
+pptmean_RT2$RTZ <-scale(pptmean_RT2$RT, center = TRUE, scale = TRUE)
+
+# plot response times
+hist(Session1_Data$RT)
+hist(Session2_Data$RT)
+
+#Removal participants
+
+Session1_trim1 <- subset(Session1_Data, Participant != "P083G01S02")
+Session1_trim2 <- subset(Session1_trim1, Participant != "P028G02S02")
+Session1_trim3 <- subset(Session1_trim2, Participant != "P076G02S01")
+Session2_trim1 <- subset(Session2_Data, Participant != "P083G01S02")
+Session2_trim2 <- subset(Session2_trim1, Participant != "P076G02S01")
+Session2_trim3 <- subset(Session2_trim2, Participant != "P024G02S02")
+
+#plot trimmed data
+
+hist(Session1_trim1$RT)
+hist(Session2_trim2$RT)
+
+#rename datasets
+
+Session1_finalData <- Session1_trim3
+Session2_finalData <- Session2_trim3
+
+# final dataset response times model
+Data.trimmed <- rbind(Session1_finalData, Session2_finalData)
+Data.trimmed2 <- subset(Data.trimmed, Epoch > 2)
+
+```
+
+# Descriptive statistics
+
+```{r echo = F}
+mean(Data.trimmed$RT)
+sd(Data.trimmed$RT)
+
+Desc <- Data.trimmed %>%
+  group_by(Probability, Epoch, Session) %>%
+  summarise(mean = mean(RT), sd = sd(RT))
+```
+
+# Contrasts
+
+```{r echo = F}
+#...........................Contrasts
+
+#.......... Factor - Session
+Data.trimmed$Session <- as.factor(Data.trimmed$Session)
+contrasts(Data.trimmed$Session) <- c(1, -1)
+contrasts(Data.trimmed$Session)
+
+#.......... Factor - Epoch
+Data.trimmed$Epoch <- as.factor(Data.trimmed$Epoch)
+contrasts(Data.trimmed$Epoch) <- MASS::contr.sdif(5) 
+contrasts(Data.trimmed$Epoch)
+
+#.......... Factor - Probability
+Data.trimmed$Probability <- as.factor(Data.trimmed$Probability)
+contrasts(Data.trimmed$Probability) <- c(1, -1)
+contrasts(Data.trimmed$Probability)
+```
+
+# Mixed effect models
+
+## Max intercept model
+
+```{r eval = F}
+max.intercept.logmodel <- lmer(logRT ~ Epoch*Probability*Session + (1|Participant),data= Data.trimmed, REML=FALSE)
+summary(max.intercept.logmodel)
+```
+
+### Checking assumptions
+
+```{r eval = F}
+#---------------Assumptions
+
+par(mfrow=c(2,2))
+#Absence of Homoskedasticity
+plot(fitted(max.intercept.logmodel),residuals(max.intercept.logmodel))
+abline(h = 0, col = "darkorange", lwd = 2)
+#normality of residuals
+hist(residuals(max.intercept.logmodel))
+qqPlot(residuals(max.intercept.logmodel))
+
+```
+
+## Procedural learning models
+
+### Model 1
+
+```{r eval = F}
+model1 <- lmer(logRT ~ Epoch*Probability*Session + (1 + Session * Epoch * Probability |Participant),data= Data.trimmed, REML=FALSE,
+                    control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+summary(model1)
+
+```
+
+### Model 2
+
+```{r eval = F}
+model2 <- lmer(logRT ~ Epoch*Probability*Session + (1 + Session * Epoch + Session * Probability + Epoch*Probability|Participant),data= Data.trimmed, REML=FALSE,
+                    control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+summary(model2)
+```
+
+### Model comparison
+
+```{r eval = FALSE}
+
+anova(model1, model2)
+```
+
+### Final model
+
+```{r echo = F}
+Model <- lmer(logRT ~ Epoch*Probability*Session + (1 + Session * Epoch + Probability |Participant),data= Data.trimmed, REML=FALSE,
+              control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=1e+05))) #model selected 
+
+res <- summary(Model)
+print(summary(Model))
+
+CI <- broom.mixed::tidy(Model, conf.int = TRUE)
+#print(CI)
+
+write.csv(CI, "RT1_results_with_influential.csv")
+
+```
+
+#### Influential cases
+
+```{r echo = FALSE}
+
+influentialcases.S1 <- influence(Model, "Participant")
+
+Zdfbetas.S1 = as.data.frame(scale(dfbetas(influentialcases.S1)))
+
+write.csv(Zdfbetas.S1, "zbetas-study1.csv")
+```
+
+#### Exclusion of influential participants
+
+```{r echo = FALSE}
+
+#Zdfbetas.S1 <- read.csv("zbetas-study1.csv")  %>% tibble::column_to_rownames(var = "X")
+
+# Identify participants 
+exclude.S1 <- Zdfbetas.S1 %>% 
+  filter_all(any_vars(abs(.) > 3.29)) %>% 
+  mutate(Participant = row.names(.))
+
+exclude.S1 <- exclude.S1$Participant
+
+write.csv(exclude.S1, "excluded_participants_study1.csv", row.names = FALSE)
+
+# Exclude participants from dataset 
+Data.final.S1 <- Data.trimmed[!Data.trimmed$Participant %in% exclude.S1,]
+
+```
+
+### Final model without influential cases
+
+```{r echo = FALSE}
+
+Model.S1 <- lmer(logRT ~ Epoch*Probability*Session + (1 + Session * Epoch + Probability |Participant),data= Data.final.S1, REML=FALSE,
+              control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=1e+05))) #model with best fit
+
+summary(Model.S1)
+
+# Model parameters with CI
+CI_S1_without_inf <- broom.mixed::tidy(Model.S1, conf.int = TRUE)
+CI_S1_without_inf$HB.value <- HB.correction(.05, CI_S1_without_inf$p.value)
+CI_S1_without_inf$sig <- ifelse(CI_S1_without_inf$p.value < CI_S1_without_inf$HB.value,"survive","does not survive")
+write.csv(CI_S1_without_inf, "CI_S1_without_inf_march.csv")
+
+```
+
+## Models with similarity
+
+```{r echo = F}
+#----------------------------------------------------- Model 2 - similarity
+
+
+# Contrast
+
+#.......... Factor - Probability
+Data.trimmed2$Probability <- as.factor(Data.trimmed2$Probability)
+contrasts(Data.trimmed2$Probability) <- c(1, -1)
+contrasts(Data.trimmed2$Probability)
+
+#.......... Factor - Session
+Data.trimmed2$Session <- as.factor(Data.trimmed2$Session)
+contrasts(Data.trimmed2$Session) <- c(1, -1)
+contrasts(Data.trimmed2$Session)
+
+
+Data.trimmed2$logRT <- log(Data.trimmed2$RT)
+
+#------------------------------------------------------Model building-------------------------------------
+Data.trimmed2$Distance <- scale(Data.trimmed2$Distance, center = TRUE, scale = TRUE)
+
+```
+
+### Model similarity
+
+```{r eval = F}
+#Add probability and session as slope
+Model_sim <- lmer(logRT ~ Session*Probability*Distance + (1 + Session * Probability |Participant),data= Data.trimmed2, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+summary(Model_sim)
+
+```
+
+### Model similarity 2
+
+```{r eval = F}
+#Add interaction between probability and session
+
+Model_sim2 <- lmer(logRT ~ Probability*Session*Distance + (1 + Session + Probability |Participant),data= Data.trimmed2, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+summary(Model_sim2)
+```
+
+### Model comparison
+
+```{r eval = F}
+anova(Model_sim, Model_sim2) #Model_sim2
+```
+
+### Final model with similarity
+
+```{r eval = F}
+Model_sim_final <-  lmer(logRT ~ Probability*Session*Distance + (1 + Session * Probability |Participant),data= Data.trimmed2, REML=FALSE, control=lmerControl(optimizer="bobyqa")) #model with best fit
+
+summary(Model_sim_final)
+print(summary(Model_sim_final))
+
+CI_sim <- broom.mixed::tidy(Model_sim_final, conf.int = TRUE)
+
+print(CI_sim)
+write.csv(CI_sim, "results_sim_with_influential1.csv")
+```
+
+#### Influential cases
+
+```{r eval = FALSE}
+
+influentialcases.sim <- influence(Model_sim_final, "Participant")
+
+Zdfbetas.sim = as.data.frame(scale(dfbetas(influentialcases.sim)))
+
+write.csv(Zdfbetas.sim, "zbetas-study1.sim.csv")
+```
+
+#### Exclusion of influential participants
+
+```{r echo = FALSE}
+#Zdfbetas.sim <- read.csv("zbetas-study1.sim.csv")  %>% tibble::column_to_rownames(var = "X")
+
+# Identify participants 
+exclude.S1.sim <- Zdfbetas.sim %>%
+  filter_all(any_vars(abs(.) > 3.29)) %>% 
+  mutate(Participant = row.names(.))
+
+exclude.S1.sim <- exclude.S1.sim$Participant
+
+write.csv(exclude.S1.sim, "excluded_participants_study1.sim.csv", row.names = FALSE)
+
+# Exclude participants from dataset 
+Data.final.sim <- Data.trimmed2[!Data.trimmed2$Participant %in% exclude.S1.sim,]
+
+```
+
+### Final model without influential cases
+
+```{r echo = FALSE}
+
+Model.S1.sim.final <-  lmer(logRT ~ Probability*Session*Distance + (1 + Session * Probability |Participant),data= Data.final.sim, REML=FALSE, control=lmerControl(optimizer="bobyqa")) #model with best fit
+
+summary(Model.S1.sim.final)
+
+# Model parameters with CI
+CI_S1_without_inf.sim <- broom.mixed::tidy(Model.S1.sim.final, conf.int = TRUE)
+CI_S1_without_inf.sim$HB.value <- HB.correction(.05, CI_S1_without_inf.sim$p.value)
+CI_S1_without_inf.sim$sig <- ifelse(CI_S1_without_inf.sim$p.value < CI_S1_without_inf.sim$HB.value,"survive","does not survive")
+write.csv(CI_S1_without_inf.sim, "CI_S1_without_inf.sim_march.csv")
+```

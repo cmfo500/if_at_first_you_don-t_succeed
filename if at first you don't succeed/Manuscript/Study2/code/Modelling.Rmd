@@ -1,0 +1,309 @@
+---
+title: "Experiment 2: Reliability of the Serial Reaction Time task: If at first you don't succeed, try try try again"
+authors: "Catia Oliveira, Marianna E. Hayiou-Thomas, Lisa Henderson, University of York"
+output:
+    html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(eval = TRUE)
+
+options(knitr.duplicate.label = "allow")
+```
+
+
+# Import libraries
+```{r echo = T,warning=FALSE,message=FALSE}
+
+library(tidyverse)
+library(dplyr)
+library(lme4)
+library(lmerTest)
+library(ggplot2)
+library(magrittr)
+library(influence.ME)
+library(MASS)
+library(tidyverse)
+library(dplyr)
+library(lmtest)
+library(car)
+library(DHARMa)
+library(GLMMadaptive)
+library(tibble)
+
+```
+
+# Functions
+```{r}
+
+source("utils.R")
+
+```
+
+# Data analysis
+
+``` {r echo = F}
+
+# Read in file
+Data <- read.csv("../data/Study2_data_all_variables.csv", header = TRUE)
+
+# Add log transformed response times
+Data$logRT <- log(Data$RT)
+
+# Divide dataset by session
+
+Session1_Data <- subset(Data, Session == 1)
+Session2_Data <- subset(Data, Session == 2)
+Session3_Data <- subset(Data, Session == 3)
+
+# Divide dataset by session and probability for outlier removal
+
+Session1_Prob <- subset(Session1_Data, Probability == 2)
+Session1_Improb <- subset(Session1_Data, Probability == 1)
+Session2_Prob <- subset(Session2_Data, Probability == 2)
+Session2_Improb <- subset(Session2_Data, Probability == 1)
+Session3_Prob <- subset(Session3_Data, Probability == 2)
+Session3_Improb <- subset(Session3_Data, Probability == 1)
+
+#------------------------------------
+
+# PARTICIPANT OUTLIER REMOVAL BASED ON ACCURACY
+
+#--- Same group
+
+#Accuracy
+pptmeanacc <-aggregate(Accuracy ~ Participant, Session1_Data, sum)
+pptmeanacc2 <-aggregate(Accuracy ~ Participant, Session2_Data, sum)
+pptmeanacc3 <-aggregate(Accuracy ~ Participant, Session3_Data, sum)
+
+#Z scores
+
+pptmeanacc$AccZ <-scale(pptmeanacc$Accuracy, center = TRUE, scale = TRUE)
+pptmeanacc2$AccZ2 <-scale(pptmeanacc2$Accuracy, center = TRUE, scale = TRUE)
+pptmeanacc3$AccZ3 <-scale(pptmeanacc3$Accuracy, center = TRUE, scale = TRUE)
+
+
+# PARTICIPANT OUTLIER REMOVAL BASED ON Response Times
+#---- Same group
+
+# Mean response times 
+pptmean_RT1 <-aggregate(RT ~ Participant, data= Session1_Data, mean)
+pptmean_RT2 <-aggregate(RT ~ Participant, data= Session2_Data, mean)
+pptmean_RT3 <-aggregate(RT ~ Participant, data= Session3_Data, mean)
+
+####z scores
+pptmean_RT1$RTZ <-scale(pptmean_RT1$RT, center = TRUE, scale = TRUE)
+pptmean_RT2$RTZ <-scale(pptmean_RT2$RT, center = TRUE, scale = TRUE)
+pptmean_RT3$RTZ <-scale(pptmean_RT3$RT, center = TRUE, scale = TRUE)
+
+# plot response times
+hist(Session1_Data$RT)
+hist(Session2_Data$RT)
+hist(Session3_Data$RT)
+
+#Removal participants
+
+Session1_trim1 <- subset(Session1_Data, Participant != "P035")
+Session3_trim1 <- subset(Session3_Data, Participant != "P009")
+
+
+#plot trimmed data
+
+hist(Session1_trim1$RT)
+hist(Session3_trim1$RT)
+
+#rename datasets
+
+Session1_finalData <- Session1_trim1
+Session3_finalData <- Session3_trim1
+
+# Combine datasets
+Data.trimmed <- rbind(Session1_finalData, Session2_Data, Session3_finalData)
+
+
+``` 
+
+# Descriptive statistics
+
+``` {r echo = F}
+
+#..............................Descriptive statistics
+
+mean(Data.trimmed$RT)
+sd(Data.trimmed$RT)
+
+Desc <- Data %>%
+  group_by(Participant, Session) %>%
+  summarise(mean = mean(RT), sd = sd(RT))
+
+print(Desc)
+```
+
+# Setting contrasts
+
+``` {r}
+#...........................Contrasts
+
+#.......... Factor - Session
+Data.trimmed$Session <- as.factor(Data.trimmed$Session)
+contrasts(Data.trimmed$Session) <- cbind(c(-2, 1, 1), c(0,-1,1))
+contrasts(Data.trimmed$Session)
+
+#.......... Factor - Epoch
+Data.trimmed$Epoch <- as.factor(Data.trimmed$Epoch)
+contrasts(Data.trimmed$Epoch) <- MASS::contr.sdif(5) 
+contrasts(Data.trimmed$Epoch)
+
+#.......... Factor - Probability
+Data.trimmed$Probability <- as.factor(Data.trimmed$Probability)
+contrasts(Data.trimmed$Probability) <- c(1, -1)
+contrasts(Data.trimmed$Probability)
+
+Data.trimmed$Participant <- as.factor(Data.trimmed$Participant)
+
+```
+
+# Modelling
+
+# Max intercept model with log transformation
+
+``` {r echo = F}
+#Model with log transformation --------------------------------
+
+max.intercept.logmodel <- lmer(logRT ~ Epoch*Probability*Session + (1|Participant),data= Data.trimmed, REML=FALSE)
+summary(max.intercept.logmodel)
+```
+
+## Checking assumptions
+
+``` {r eval = F}
+
+#Absence of Homoskedasticity
+plot(fitted(max.intercept.logmodel),residuals(max.intercept.logmodel))
+
+#normality of residuals
+hist(residuals(max.intercept.logmodel))
+qqPlot(residuals(max.intercept.logmodel))
+qqmath(residuals(max.intercept.logmodel), id=0.05)
+
+skewness(residuals(max.intercept.logmodel))
+kurtosis(residuals(max.intercept.logmodel))
+
+``` 
+
+
+# Building random structure - lmer models
+
+
+### Model 1
+
+``` {r eval = F}
+
+model1 <- lmer(logRT ~ Epoch*Probability*Session + (1 + Session * Probability * Epoch|Participant),data= Data.trimmed, REML=FALSE,
+                   control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=1e+05)))
+summary(model1)
+
+```
+
+### Model 2
+
+``` {r eval = F}
+
+model2 <- lmer(logRT ~ Epoch*Probability*Session + (1 + Session * Probability + Epoch|Participant),data= Data.trimmed, REML=FALSE,
+                   control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=1e+05)))
+summary(model2)
+
+```
+
+## Model 3
+
+``` {r eval = F}
+
+model3 <- lmer(logRT ~ Epoch*Probability*Session + (1 + Session * Epoch + Probability |Participant),data= Data.trimmed, REML=FALSE,
+                   control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=1e+05)))
+summary(model3)
+
+```
+
+## Model 4
+
+``` {r eval = F}
+
+model4 <- lmer(logRT ~ Epoch*Probability*Session + (1 + Session + Epoch + Probability |Participant),data= Data.trimmed, REML=FALSE,
+               control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=1e+05)))
+
+summary(model4)
+
+```
+
+
+### Comparison between models
+
+``` {r eval = F}
+
+anova(model1, model2, model3, model4) 
+```
+
+## Final model
+
+```{r echo = F}
+
+Model <- lmer(logRT ~ Epoch*Probability*Session + (1 + Session + Epoch + Probability |Participant),data= Data.trimmed, REML=FALSE,
+                   control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=1e+05)))
+print(summary(Model))
+res <- summary(Model)
+
+```
+
+### Influential cases
+
+```{r echo = FALSE}
+
+influentialcases <- influence(Model, "Participant")
+
+Zdfbetas = as.data.frame(scale(dfbetas(influentialcases)))
+
+write.csv(Zdfbetas, "zbetas-study2.csv")
+```
+
+### Excluding participants
+
+```{r echo = FALse}
+
+Zdfbetas <- read.csv("zbetas-study2-4feb.csv") %>%
+  tibble::column_to_rownames(var = "X")
+
+exclude.S2 <- Zdfbetas %>%
+  filter_all(any_vars(abs(.) > 3.29)) %>% 
+  tibble::rownames_to_column("Participant") 
+
+exclude.S2 <- exclude.S2$Participant
+
+write.csv(exclude.S2, "excluded_participants_study2.csv", row.names = FALSE)
+
+# Exclude participants from dataset 
+Data.final <- Data.trimmed[!Data.trimmed$Participant %in% exclude.S2,]
+```
+
+# Final model without influential cases
+
+```{r echo = FALSE}
+
+Model.final <- lmer(logRT ~ Epoch*Probability*Session + (1 + Session + Epoch + Probability |Participant),data= Data.final, REML=FALSE,
+                   control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=1e+05)))
+
+summary(Model.final)
+
+# Model parameters with CI
+CI_S2_without_inf <- broom.mixed::tidy(Model.final, conf.int = TRUE)
+
+# Correction for multiple comparisons
+CI_S2_without_inf$HB.value <- HB.correction(.05, CI_S2_without_inf$p.value)
+CI_S2_without_inf$sig <- ifelse(CI_S2_without_inf$p.value < CI_S2_without_inf$HB.value,"survive","does not survive")
+write.csv(CI_S2_without_inf, "CI_S2_without_inf.csv")
+```
+
