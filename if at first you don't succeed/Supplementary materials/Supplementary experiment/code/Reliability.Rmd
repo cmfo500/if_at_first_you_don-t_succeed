@@ -518,7 +518,7 @@ Group <- Data %>% group_by(Participant) %>%
 Age <- Data %>% group_by(Participant) %>%
                 summarise(Age = mean(Age))
 
-Cor_data <-  as.data.frame(list(Cor_data, Group, Age) %>%
+Cor_data <- as.data.frame(list(Cor_data, Group, Age) %>%
                              reduce(full_join, by = "Participant"))
 
 Cor_data <- Cor_data %>%
@@ -578,15 +578,12 @@ RT$Probability[RT$Probability == 1] <- "Improb"
 
 RT$Epoch <- as.factor(RT$Epoch)
 
-RT.plot <- ggplot(RT,
-                  aes(x = Epoch, 
-                      y = mean, group =series,
-                      color = Group)) + 
+RT.plot <- ggplot(RT, aes(x = Epoch, y = mean, group = series, color = Group)) +
   geom_line(aes(linetype = Probability), position=position_dodge(0.05), size = 1) +
-  geom_errorbar(aes(ymin=lower.ci, ymax=upper.ci), width=.05, 
-                position=position_dodge(0.05),
-                show.legend = FALSE) +
-  facet_wrap(~ Session, scales="free") + coord_cartesian(ylim = c(350, 520)) + theme_classic()
+  geom_errorbar(aes(ymin=lower.ci, ymax=upper.ci), width=.05, position=position_dodge(0.05), show.legend = FALSE) +
+  facet_wrap(~ Session, scales="free") +
+  coord_cartesian(ylim = c(350, 520)) +
+  theme_classic()
 
 RT.plot <- RT.plot + ylab("mean RT") + xlab("Epoch")
 
@@ -821,7 +818,19 @@ cor.test(high_tau2.noISI$Diff1_slopes, high_tau2.noISI$Diff2_slopes)
 
 ```{r echo = F}
 
-Correlations <- data.frame(Correlations = c("Median 1", "Median 2", "Exp_inc", "Exp_ex"), ISI_1_N = round(c(res_p_ISI$n[11, 19], res_p_ISI$n[11, 20], res_p_ISI$n[11, 30], res_p_ISI$n[11, 27]),2), ISI_1_cor = round(c(res_p_ISI$r[11, 19], res_p_ISI$r[11, 20], res_p_ISI$r[11, 30], res_p_ISI$r[11, 27]),2), ISI_1_pv = round(c(res_p_ISI$P[11, 19], res_p_ISI$P[11, 20], res_p_ISI$P[11, 30], res_p_ISI$P[11, 27]),3), ISI_2_N = round(c(res_p_ISI$n[12, 19], res_p_ISI$n[12, 20], res_p_ISI$n[12, 30], res_p_ISI$n[12, 27]),2), ISI_2_cor = round(c(res_p_ISI$r[12, 19], res_p_ISI$r[12, 20], res_p_ISI$r[12, 30], res_p_ISI$r[12, 27]),2), ISI_2_pv = round(c(res_p_ISI$P[12, 19], res_p_ISI$P[12, 20], res_p_ISI$P[12, 30], res_p_ISI$P[12, 27]),3), noISI_1_N = round(c(res_p_noISI$n[11, 19], res_p_noISI$n[11, 20], res_p_noISI$n[11, 30], res_p_noISI$n[11, 27]),2), noISI_1_cor = round(c(res_p_noISI$r[11, 19], res_p_noISI$r[11, 20], res_p_noISI$r[11, 30], res_p_noISI$r[11, 27]),2), noISI_1_pv = round(c(res_p_noISI$P[11, 19], res_p_noISI$P[11, 20], res_p_noISI$P[11, 30], res_p_noISI$P[11, 27]),3), noISI_2_N = round(c(res_p_noISI$n[12, 19], res_p_noISI$n[12, 20], res_p_noISI$n[12, 30], res_p_noISI$n[12, 27]),2), noISI_2_cor = round(c(res_p_noISI$r[12, 19], res_p_noISI$r[12, 20], res_p_noISI$r[12, 30], res_p_noISI$r[12, 27]),2), noISI_2_pv = round(c(res_p_noISI$P[12, 19], res_p_noISI$P[12, 20], res_p_noISI$P[12, 30], res_p_noISI$P[12, 27]),3))
+Correlations <- data.frame(Correlations = c("Median 1", "Median 2", "Exp_inc", "Exp_ex"),
+                           ISI_1_N = round(c(res_p_ISI$n[11, 19], res_p_ISI$n[11, 20], res_p_ISI$n[11, 30], res_p_ISI$n[11, 27]),2),
+                           ISI_1_cor = round(c(res_p_ISI$r[11, 19], res_p_ISI$r[11, 20], res_p_ISI$r[11, 30], res_p_ISI$r[11, 27]),2),
+                           ISI_1_pv = round(c(res_p_ISI$P[11, 19], res_p_ISI$P[11, 20], res_p_ISI$P[11, 30], res_p_ISI$P[11, 27]),3),
+                           ISI_2_N = round(c(res_p_ISI$n[12, 19], res_p_ISI$n[12, 20], res_p_ISI$n[12, 30], res_p_ISI$n[12, 27]),2),
+                           ISI_2_cor = round(c(res_p_ISI$r[12, 19], res_p_ISI$r[12, 20], res_p_ISI$r[12, 30], res_p_ISI$r[12, 27]),2),
+                           ISI_2_pv = round(c(res_p_ISI$P[12, 19], res_p_ISI$P[12, 20], res_p_ISI$P[12, 30], res_p_ISI$P[12, 27]),3),
+                           noISI_1_N = round(c(res_p_noISI$n[11, 19], res_p_noISI$n[11, 20], res_p_noISI$n[11, 30], res_p_noISI$n[11, 27]),2),
+                           noISI_1_cor = round(c(res_p_noISI$r[11, 19], res_p_noISI$r[11, 20], res_p_noISI$r[11, 30], res_p_noISI$r[11, 27]),2),
+                           noISI_1_pv = round(c(res_p_noISI$P[11, 19], res_p_noISI$P[11, 20], res_p_noISI$P[11, 30], res_p_noISI$P[11, 27]),3),
+                           noISI_2_N = round(c(res_p_noISI$n[12, 19], res_p_noISI$n[12, 20], res_p_noISI$n[12, 30], res_p_noISI$n[12, 27]),2),
+                           noISI_2_cor = round(c(res_p_noISI$r[12, 19], res_p_noISI$r[12, 20], res_p_noISI$r[12, 30], res_p_noISI$r[12, 27]),2),
+                           noISI_2_pv = round(c(res_p_noISI$P[12, 19], res_p_noISI$P[12, 20], res_p_noISI$P[12, 30], res_p_noISI$P[12, 27]),3))
 
 plot(Cor_data_noISI$Diff1_slopes, Cor_data_noISI$median_1)
 plot(Cor_data_noISI$Diff1_slopes, Cor_data_noISI$median_2)
@@ -860,12 +869,16 @@ ba.stats2_noISI <- as.data.frame(cbind(ba.stats_noISI$means, ba.stats_noISI$diff
 cor.test(ba.stats_noISI$means, ba.stats_noISI$diffs)
 
 #draw plot
-BA_noISI <- ggMarginal(ggplot(ba.stats2_noISI, aes(V1,V2)) +geom_hline(yintercept = ba.stats_noISI$lines, linetype="dashed",   size=1, col = "black")+ geom_point(colour = "dodgerblue3", size = 2.5, shape =18) +
-                     theme_bw()+theme(legend.position = "bottom",
-                     legend.box = "vertical") + labs(color = "Levenshtein distance  ")+
-                     scale_y_continuous(breaks = seq(-70,70,20))+  coord_cartesian(ylim = c(-68,68))+
-                     labs(x = "\n Average procedural learning", y = "Difference (S2-S1)") +
-                     geom_hline(yintercept = ba.stats_noISI$CI.lines, col = "grey", linetype="dashed", size = 0.70), type = "histogram")
+BA_noISI <- ggMarginal(ggplot(ba.stats2_noISI, aes(V1,V2)) +
+                         geom_hline(yintercept = ba.stats_noISI$lines, linetype="dashed", size=1, col = "black") +
+                         geom_point(colour = "dodgerblue3", size = 2.5, shape =18) +
+                         theme_bw() + theme(legend.position = "bottom", legend.box = "vertical") +
+                         labs(color = "Levenshtein distance  ") +
+                         scale_y_continuous(breaks = seq(-70,70,20)) +
+                         coord_cartesian(ylim = c(-68,68)) +
+                         labs(x = "\n Average procedural learning", y = "Difference (S2-S1)") +
+                         geom_hline(yintercept = ba.stats_noISI$CI.lines, col = "grey", linetype="dashed", size = 0.70),
+                         type = "histogram")
 
 print(BA_noISI)
 
@@ -1047,7 +1060,6 @@ cor.test(older_ISI$Difference1, older_ISI$Difference2)
 cor.test(younger_ISI$Diff1_slopes, younger_ISI$Diff2_slopes)
 cor.test(older_ISI$Diff1_slopes, older_ISI$Diff2_slopes)
 
-
 hist(log(Diff_noISI_trimmed$Age))
 qqnorm(log(Diff_noISI_trimmed$Age), pch = 1, frame = FALSE)
 median(log(Diff_noISI_trimmed$Age))
@@ -1177,26 +1189,50 @@ Session2_Data_Odd <- subset(Data.trimmed, Session == 2 & Even_Odd == 1)
 #session 1 - even
 model1.ISI.even <- lmer(logRT ~ Probability*Group + (Probability|Participant),data= Session1_Data_Even, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
 
-df.ISI.even <- as.data.frame(coef(model1.ISI.even)$Participant) %>% tibble::rownames_to_column("Participant") %>% rename(Diff1_slopes_even = Probability1) %>% select(Participant, Diff1_slopes_even)
-df.ISI.even <- merge(df.ISI.even, Group, by = c("Participant")) %>% subset(Group == "ISI") %>% dplyr::select(Participant, Diff1_slopes_even)
+df.ISI.even <- as.data.frame(coef(model1.ISI.even)$Participant) %>%
+  tibble::rownames_to_column("Participant") %>%
+  rename(Diff1_slopes_even = Probability1) %>%
+  select(Participant, Diff1_slopes_even)
+
+df.ISI.even <- merge(df.ISI.even, Group, by = c("Participant")) %>%
+  subset(Group == "ISI") %>%
+  dplyr::select(Participant, Diff1_slopes_even)
 
 #session 1 - odd
 model1.ISI.odd <- lmer(logRT ~ Probability*Group + (Probability|Participant),data= Session1_Data_Odd, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
 
-df.ISI.odd <- as.data.frame(coef(model1.ISI.odd)$Participant) %>% tibble::rownames_to_column("Participant") %>% rename(Diff1_slopes_odd = Probability1) %>% select(Participant, Diff1_slopes_odd)
-df.ISI.odd <- merge(df.ISI.odd, Group, by = c("Participant")) %>% subset(Group == "ISI") %>% dplyr::select(Participant, Diff1_slopes_odd)
+df.ISI.odd <- as.data.frame(coef(model1.ISI.odd)$Participant) %>%
+  tibble::rownames_to_column("Participant") %>%
+  rename(Diff1_slopes_odd = Probability1) %>%
+  select(Participant, Diff1_slopes_odd)
+
+df.ISI.odd <- merge(df.ISI.odd, Group, by = c("Participant")) %>%
+  subset(Group == "ISI") %>%
+  dplyr::select(Participant, Diff1_slopes_odd)
 
 #session 2 - even
 model2.ISI.even <- lmer(logRT ~ Probability*Group + (Probability|Participant),data= Session2_Data_Even, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
 
-df2.ISI.even <- as.data.frame(coef(model2.ISI.even)$Participant) %>% tibble::rownames_to_column("Participant") %>% rename(Diff2_slopes_even = Probability1) %>% select(Participant, Diff2_slopes_even)
-df2.ISI.even <- merge(df2.ISI.even, Group, by = c("Participant")) %>% subset(Group == "ISI") %>% dplyr::select(Participant, Diff2_slopes_even)
+df2.ISI.even <- as.data.frame(coef(model2.ISI.even)$Participant) %>%
+  tibble::rownames_to_column("Participant") %>%
+  rename(Diff2_slopes_even = Probability1) %>%
+  select(Participant, Diff2_slopes_even)
+
+df2.ISI.even <- merge(df2.ISI.even, Group, by = c("Participant")) %>%
+  subset(Group == "ISI") %>%
+  dplyr::select(Participant, Diff2_slopes_even)
 
 #session 2 - odd
 model2.ISI.odd <- lmer(logRT ~ Probability*Group + (Probability|Participant),data= Session2_Data_Odd, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
 
-df2.ISI.odd <- as.data.frame(coef(model2.ISI.odd)$Participant) %>% tibble::rownames_to_column("Participant") %>% rename(Diff2_slopes_odd = Probability1) %>% select(Participant, Diff2_slopes_odd)
-df2.ISI.odd <- merge(df2.ISI.odd, Group, by = c("Participant")) %>% subset(Group == "ISI") %>% dplyr::select(Participant, Diff2_slopes_odd)
+df2.ISI.odd <- as.data.frame(coef(model2.ISI.odd)$Participant) %>%
+  tibble::rownames_to_column("Participant") %>%
+  rename(Diff2_slopes_odd = Probability1) %>%
+  select(Participant, Diff2_slopes_odd)
+
+df2.ISI.odd <- merge(df2.ISI.odd, Group, by = c("Participant")) %>%
+  subset(Group == "ISI") %>%
+  dplyr::select(Participant, Diff2_slopes_odd)
 
 # noISI group -------
 
@@ -1214,30 +1250,56 @@ Session2_Data_Odd <- subset(Data.trimmed, Session == 2 & Even_Odd == 1)
 #session 1 - even
 model1.noISI.even <- lmer(logRT ~ Probability*Group + (Probability|Participant),data= Session1_Data_Even, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
 
-df.noISI.even <- as.data.frame(ranef(model1.noISI)) %>%  subset(term == "Probability1") %>% rename(Participant = grp, Diff1_slopes_even = condval)
-df.noISI.even <- merge(df.noISI.even, Group, by = c("Participant")) %>% subset(Group == "noISI") %>% dplyr::select(Participant, Diff1_slopes_even)
+df.noISI.even <- as.data.frame(ranef(model1.noISI)) %>%
+  subset(term == "Probability1") %>%
+  rename(Participant = grp, Diff1_slopes_even = condval)
+
+df.noISI.even <- merge(df.noISI.even, Group, by = c("Participant")) %>%
+  subset(Group == "noISI") %>%
+  dplyr::select(Participant, Diff1_slopes_even)
 
 #session 1 - odd
 model1.noISI.odd <- lmer(logRT ~ Probability*Group + (Probability|Participant),data= Session1_Data_Odd, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
 
-df.noISI.odd <- as.data.frame(coef(model1.noISI.odd)$Participant) %>% tibble::rownames_to_column("Participant") %>% rename(Diff1_slopes_odd = Probability1) %>% select(Participant, Diff1_slopes_odd)
-df.noISI.odd <- merge(df.noISI.odd, Group, by = c("Participant")) %>% subset(Group == "noISI") %>% dplyr::select(Participant, Diff1_slopes_odd)
+df.noISI.odd <- as.data.frame(coef(model1.noISI.odd)$Participant) %>%
+  tibble::rownames_to_column("Participant") %>%
+  rename(Diff1_slopes_odd = Probability1) %>%
+  select(Participant, Diff1_slopes_odd)
+
+df.noISI.odd <- merge(df.noISI.odd, Group, by = c("Participant")) %>%
+  subset(Group == "noISI") %>%
+  dplyr::select(Participant, Diff1_slopes_odd)
 
 #session 2 - even
 model2.noISI.even <- lmer(logRT ~ Probability*Group + (Probability|Participant),data= Session2_Data_Even, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
 
-df2.noISI.even <- as.data.frame(coef(model2.noISI.even)$Participant) %>% tibble::rownames_to_column("Participant") %>% rename(Diff2_slopes_even = Probability1) %>% select(Participant, Diff2_slopes_even)
-df2.noISI.even <- merge(df2.noISI.even, Group, by = c("Participant")) %>% subset(Group == "noISI") %>% dplyr::select(Participant, Diff2_slopes_even)
+df2.noISI.even <- as.data.frame(coef(model2.noISI.even)$Participant) %>%
+  tibble::rownames_to_column("Participant") %>%
+  rename(Diff2_slopes_even = Probability1) %>%
+  select(Participant, Diff2_slopes_even)
+
+df2.noISI.even <- merge(df2.noISI.even, Group, by = c("Participant")) %>%
+  subset(Group == "noISI") %>%
+  dplyr::select(Participant, Diff2_slopes_even)
 
 #session 2 - odd
 model2.noISI.odd <- lmer(logRT ~ Probability*Group + (Probability|Participant),data= Session2_Data_Odd, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
 
-df2.noISI.odd <- as.data.frame(coef(model2.noISI.odd)$Participant) %>% tibble::rownames_to_column("Participant") %>% rename(Diff2_slopes_odd = Probability1) %>% select(Participant, Diff2_slopes_odd)
-df2.noISI.odd <- merge(df2.noISI.odd, Group, by = c("Participant")) %>% subset(Group == "noISI") %>% dplyr::select(Participant, Diff2_slopes_odd)
+df2.noISI.odd <- as.data.frame(coef(model2.noISI.odd)$Participant) %>%
+  tibble::rownames_to_column("Participant")%>%
+  rename(Diff2_slopes_odd = Probability1) %>%
+  select(Participant, Diff2_slopes_odd)
 
+df2.noISI.odd <- merge(df2.noISI.odd, Group, by = c("Participant")) %>%
+  subset(Group == "noISI") %>%
+  dplyr::select(Participant, Diff2_slopes_odd)
 
-SH.Slopes.ISI <- as.data.frame(list(df.ISI.odd, df.ISI.even, df2.ISI.odd, df2.ISI.even) %>% reduce(full_join, by = "Participant"))
-SH.Slopes.noISI <- as.data.frame(list(df.noISI.odd, df.noISI.even, df2.noISI.odd, df2.noISI.even) %>% reduce(full_join, by = "Participant"))
+SH.Slopes.ISI <- as.data.frame(list(df.ISI.odd, df.ISI.even, df2.ISI.odd, df2.ISI.even) %>%
+                                 reduce(full_join, by = "Participant"))
+
+SH.Slopes.noISI <- as.data.frame(list(df.noISI.odd, df.noISI.even, df2.noISI.odd, df2.noISI.even) %>%
+                                   reduce(full_join, by = "Participant"))
+
 SH.Slopes <- rbind(SH.Slopes.ISI, SH.Slopes.noISI)
 
 ```
@@ -1280,6 +1342,7 @@ SH_RS4 <- cor.test(Slope_noISI_trim$Diff2_slopes_odd, Slope_noISI_trim$Diff2_slo
 ### Summary split-half reliability
 
 ```{r echo= F}
+
 Split_half <- data.frame(Measure = c("Difference", "Ratio1", "Ratio2", "Regression slopes"),
                          N_ISI_1 = c(SH_D1$parameter+2, SH_R1.1$parameter+2, SH_R1.2$parameter+2, SH_RS1$parameter+2),
                          Split.half_ISI_1_R = round(c(SH_D1$estimate, SH_R1.1$estimate, SH_R1.2$estimate, SH_RS1$estimate),3),
@@ -1300,12 +1363,16 @@ print(Split_half)
 ###### Normality of regression slopes
 
 ``` {r}
+
 shapiro.test(Diff_ISI$Diff1_slopes)
+
 ```
+
 ##### Group ISI - session 2
 
 ###### Normality of regression slopes
 ``` {r}
+
 shapiro.test(Diff_ISI$Diff2_slopes)
 
 ```
@@ -1313,8 +1380,11 @@ shapiro.test(Diff_ISI$Diff2_slopes)
 ##### Group no ISI - session 1
 
 ###### Normality of regression slopes
+
 ``` {r}
+
 shapiro.test(Diff_noISI$Diff1_slopes)
+
 ```
 
 
@@ -1323,6 +1393,7 @@ shapiro.test(Diff_noISI$Diff1_slopes)
 ###### Normality of regression slopes
 
 ``` {r}
+
 shapiro.test(Diff_noISI$Diff2_slopes)
 
 ```
@@ -1335,14 +1406,17 @@ shapiro.test(Diff_noISI$Diff2_slopes)
 
 ggplot(Difference, aes(Diff1_slopes, Diff2_slopes)) +
   geom_point(aes(color = Age), size = 2.5)
+
 ```
 
 ### Plotting ISI by age
 
 ``` {r echo = F,warning=FALSE,message=FALSE}
+
 plot(Diff_ISI_trimmed$Diff1_slopes, Diff_ISI_trimmed$Diff2_slopes)
 
 text(Diff_ISI_trimmed$Diff1_slopes, Diff_ISI_trimmed$Diff2_slopes, labels=Diff_ISI$Age, cex= 0.7, pos = 1)
+
 ```
 
 ### using colour
@@ -1350,18 +1424,22 @@ text(Diff_ISI_trimmed$Diff1_slopes, Diff_ISI_trimmed$Diff2_slopes, labels=Diff_I
 ``` {r echo = F,warning=FALSE,message=FALSE}
 
 ggplot(Diff_ISI_trimmed, aes(Diff1_slopes, Diff2_slopes)) +  geom_point(aes(color = Age), size = 2.5)
+
 ```
 
 
 ``` {r echo = F,warning=FALSE,message=FALSE}
+
 plot(Diff_noISI_trimmed$Diff1_slopes, Diff_noISI_trimmed$Diff2_slopes)
 
 text(Diff_noISI_trimmed$Diff1_slopes, Diff_noISI_trimmed$Diff2_slopes, labels=Diff_noISI$Age, cex= 0.7, pos = 1)
+
 ```
 
 ### using colour
 
 ``` {r echo = F,warning=FALSE,message=FALSE}
+
 ggplot(Diff_noISI_trimmed, aes(Diff1_slopes, Diff2_slopes)) +
   geom_point(aes(color = Age), size = 2.5)
 
@@ -1392,7 +1470,6 @@ t.test(Cor_data_ISI$median_2, Cor_data_noISI$median_2)
 ```
 
 ## Reliability PVT
-
 
 ```{r echo = F}
 
@@ -1579,14 +1656,17 @@ t.test(Exp_ISI$Triplets_exc, mu = 29.9754375, alternative = "two.sided")
 t.test(Exp_noISI$Diff_triplets_exc, mu = 10.40, alternative = "two.sided")
 t.test(Exp_noISI$Longest_exc, mu = 5.84, alternative = "two.sided")
 t.test(Exp_noISI$Triplets_exc, mu = 29.9754375, alternative = "two.sided")
+
 ```
 
 ##### Group comparison - explicit awareness
 
 ```{r}
+
 # Compute the analysis of variance
 res.aov <- aov(value ~ Group*condition, data = Exp_long[Exp_long$variable == "Triplets",])
 # Summary of the analysis
 summary(res.aov)
+
 ```
 
