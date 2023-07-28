@@ -1473,11 +1473,13 @@ t.test(Cor_data_ISI$median_2, Cor_data_noISI$median_2)
 
 ```{r echo = F}
 
-lapses <- cor.test(PVT_trimmed$lapses_1, PVT_trimmed$lapses_2, method = "spearman", exact = FALSE)
-mean_RT <- cor.test(PVT_trimmed$mean_PVT_1, PVT_trimmed$mean_PVT_2, method = "spearman", exact = FALSE)
-reciprocal <- cor.test(PVT_trimmed$mean_recip_1, PVT_trimmed$mean_recip_2, method = "spearman", exact = FALSE)
-median <- cor.test(PVT_trimmed$median_1, PVT_trimmed$median_2, method = "spearman", exact = FALSE)
-tau <- cor.test(PVT_tau_trimmed$Ex_gaussian_PVT_tau_1, PVT_tau_trimmed$Ex_gaussian_PVT_tau_2, method = "spearman", exact = FALSE)
+lapses <- cor.test(PVT_trimmed$lapses_1, PVT_trimmed$lapses_2, method = "spearman", exact = FALSE, ci = 0.95)
+
+SpearmanRho(PVT_trimmed$lapses_1, PVT_trimmed$lapses_2, use = "pairwise.complete.obs", conf.level = .95)
+mean_RT <- cor.test(PVT_trimmed$mean_PVT_1, PVT_trimmed$mean_PVT_2, method = "pearson", exact = FALSE)
+reciprocal <- cor.test(PVT_trimmed$mean_recip_1, PVT_trimmed$mean_recip_2, method = "pearson", exact = FALSE)
+median <- cor.test(PVT_trimmed$median_1, PVT_trimmed$median_2, method = "pearson", exact = FALSE)
+tau <- cor.test(PVT_tau_trimmed$Ex_gaussian_PVT_tau_1, PVT_tau_trimmed$Ex_gaussian_PVT_tau_2, method = "pearson", exact = FALSE)
 
 PVT_reliability <- data.frame(Measure = c("Lapses", "Mean RT", "Median", "Reciprocal",  "Ex-gaussian Tau"),
                               Test_retest = round(c(lapses$estimate, mean_RT$estimate, median$estimate, reciprocal$estimate,
@@ -1498,7 +1500,7 @@ histout=apply(PVT_trimmed_SH[,-1],2,hist)
 ```
 
 
-### Summary Split-half reliability
+### Summary Split-half reliability PVT
 
 ```{r echo = FALSE, warning=FALSE}
 
