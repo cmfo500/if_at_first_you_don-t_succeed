@@ -642,29 +642,33 @@ print(lower_ISI)
 
 ``` {r eval = F}
 
-median(na.omit(log(Cor_data_ISI$Ex_gaussian_PVT_tau_1)))
-median(na.omit(log(Cor_data_ISI$Ex_gaussian_PVT_tau_2)))
+tau.ISI.cutoff1 <- median(na.omit(log(Cor_data_ISI$Ex_gaussian_PVT_tau_1)))
+tau.ISI.cutoff2 <- median(na.omit(log(Cor_data_ISI$Ex_gaussian_PVT_tau_2)))
 
 # tau session 1
-low_tau.ISI <- subset(Cor_data_ISI, log(Ex_gaussian_PVT_tau_1) <= 4.055582)
-high_tau.ISI <- subset(Cor_data_ISI, log(Ex_gaussian_PVT_tau_1) > 4.055582)
+low_tau.ISI <- subset(Cor_data_ISI, log(Ex_gaussian_PVT_tau_1) <= tau.ISI.cutoff1)
+high_tau.ISI <- subset(Cor_data_ISI, log(Ex_gaussian_PVT_tau_1) > tau.ISI.cutoff1)
 
 cor.test(low_tau.ISI$Diff1_slopes, low_tau.ISI$Diff2_slopes)
 cor.test(high_tau.ISI$Diff1_slopes, high_tau.ISI$Diff2_slopes)
 
 # tau session 2
-low_tau2.ISI <- subset(Cor_data_ISI, log(Ex_gaussian_PVT_tau_2) <= 4.061656)
-high_tau2.ISI <- subset(Cor_data_ISI, log(Ex_gaussian_PVT_tau_2) > 4.061656)
+low_tau2.ISI <- subset(Cor_data_ISI, log(Ex_gaussian_PVT_tau_2) <= tau.ISI.cutoff2)
+high_tau2.ISI <- subset(Cor_data_ISI, log(Ex_gaussian_PVT_tau_2) > tau.ISI.cutoff2)
 
 cor.test(low_tau2.ISI$Diff1_slopes, low_tau2.ISI$Diff2_slopes)
 cor.test(high_tau2.ISI$Diff1_slopes, high_tau2.ISI$Diff2_slopes)
+
 ```
 
 ### Plotting regression slopes
 
 #### Session 1
+
 ``` {r echo = F, results = 'markup'}
+
 hist(na.omit(Diff_ISI_trimmed$Diff1_slopes), xlab = "Regression slopes - 1", main = "")
+
 ```
 
 #### Session 2
@@ -796,19 +800,19 @@ write.csv(lower_noISI, "../results/noISI_correlations.csv")
 
 ``` {r eval = F}
 
-median(na.omit(log(Cor_data_noISI$Ex_gaussian_PVT_tau_1)))
-median(na.omit(log(Cor_data_noISI$Ex_gaussian_PVT_tau_2)))
+tau.noISI.cutoff1 <- median(na.omit(log(Cor_data_noISI$Ex_gaussian_PVT_tau_1)))
+tau.noISI.cutoff2 <- median(na.omit(log(Cor_data_noISI$Ex_gaussian_PVT_tau_2)))
 
 # tau session 1
-low_tau.noISI <- subset(Cor_data_noISI, log(Ex_gaussian_PVT_tau_1) <= 4.055582)
-high_tau.noISI <- subset(Cor_data_noISI, log(Ex_gaussian_PVT_tau_1) > 4.055582)
+low_tau.noISI <- subset(Cor_data_noISI, log(Ex_gaussian_PVT_tau_1) <= tau.noISI.cutoff1)
+high_tau.noISI <- subset(Cor_data_noISI, log(Ex_gaussian_PVT_tau_1) > tau.noISI.cutoff1)
 
 cor.test(low_tau.noISI$Diff1_slopes, low_tau.noISI$Diff2_slopes)
 cor.test(high_tau.noISI$Diff1_slopes, high_tau.noISI$Diff2_slopes)
 
 # tau session 2
-low_tau2.noISI <- subset(Cor_data_noISI, log(Ex_gaussian_PVT_tau_2) <= 4.061656)
-high_tau2.noISI <- subset(Cor_data_noISI, log(Ex_gaussian_PVT_tau_2) > 4.061656)
+low_tau2.noISI <- subset(Cor_data_noISI, log(Ex_gaussian_PVT_tau_2) <= tau.noISI.cutoff2)
+high_tau2.noISI <- subset(Cor_data_noISI, log(Ex_gaussian_PVT_tau_2) > tau.noISI.cutoff2)
 
 cor.test(low_tau2.noISI$Diff1_slopes, low_tau2.noISI$Diff2_slopes)
 cor.test(high_tau2.noISI$Diff1_slopes, high_tau2.noISI$Diff2_slopes)
@@ -843,13 +847,19 @@ print(Correlations)
 ### Plotting regression slopes
 
 #### Session 1
+
 ```{r echo = F}
+
 hist(na.omit(Diff_noISI_trimmed$Diff1_slopes), xlab = "Regression slopes 1", main = "")
+
 ```
 
 #### Session 2
+
 ``` {r echo = F}
+
 hist(na.omit(Diff_noISI_trimmed$Diff2_slopes), xlab = "Regression slopes 1", main = "")
+
 ```
 
 ## Agreement - noISI group 
@@ -888,6 +898,7 @@ dev.off()
 ```
 
 ``` {r echo = F, results = 'hide'}
+
 # Bias 
 Diff_noISI_trimmed$Stability1 <- Diff_noISI_trimmed$Diff2_slopes - Diff_noISI_trimmed$Diff1_slopes
 
@@ -941,6 +952,7 @@ samples <- summary(correlationBF(x = noISI.BF.df$Diff1_slopes, y = noISI.BF.df$D
                         posterior = TRUE, iterations = 100000))
 
 write.csv(noISI.Bayes.factors, "noISI.Bayes.factors.csv")
+
 ```
 
 ## Reliability by group
@@ -966,6 +978,7 @@ Desc_SeqL <- Diff_long %>%
 Desc_SeqL <- Desc_SeqL %>%
   mutate_if(is.numeric, round, digits=3)
 print(Desc_SeqL)
+
 ```
 
 ### Plotting procedural learning
@@ -978,6 +991,7 @@ plot(Diff_ISI_trimmed$Difference1, Diff_ISI_trimmed$Difference2)
 plot(Diff_ISI_trimmed$Ratio1.1, Diff_ISI_trimmed$Ratio1.2)
 plot(Diff_ISI_trimmed$Ratio1.2, Diff_ISI_trimmed$Ratio2.2)
 plot(Diff_ISI_trimmed$Diff1_slopes, Diff_ISI_trimmed$Diff2_slopes)
+
 ```
 
 #### noISI group
@@ -988,11 +1002,13 @@ plot(Diff_noISI_trimmed$Difference1, Diff_noISI_trimmed$Difference2)
 plot(Diff_noISI_trimmed$Ratio1.1, Diff_noISI_trimmed$Ratio2.1)
 plot(Diff_noISI_trimmed$Ratio1.2, Diff_noISI_trimmed$Ratio2.2)
 plot(Diff_noISI_trimmed$Diff1_slopes, Diff_noISI_trimmed$Diff2_slopes)
+
 ```
 
 ### Summary test-retest reliability
 
 ``` {r echo = F}
+
 D1 <- cor.test(Diff_noISI_trimmed$Difference1, Diff_noISI_trimmed$Difference2)
 R1.1 <- cor.test(Diff_noISI_trimmed$Ratio1.1, Diff_noISI_trimmed$Ratio2.1)
 R1.2 <- cor.test(Diff_noISI_trimmed$Ratio1.2, Diff_noISI_trimmed$Ratio2.2)
@@ -1011,6 +1027,7 @@ print(Test_retest)
 
 # ICC
 psych::ICC(Diff_noISI_trimmed[c("Diff1_slopes", "Diff2_slopes")], missing = TRUE)
+
 ```
 
 ### Effect of group on reliability
@@ -1075,11 +1092,13 @@ cor.test(older_noISI$Difference1, older_noISI$Difference2)
 # Regression slopes
 cor.test(younger_noISI$Diff1_slopes, younger_noISI$Diff2_slopes)
 cor.test(older_noISI$Diff1_slopes, older_noISI$Diff2_slopes)
+
 ```
 
 ## Split-half reliability
 
 ```{r echo= F, warning=FALSE}
+
 #Outlier ISI group
 
 Wide_ISI <- subset(Wide2, Group == "ISI")
@@ -1167,6 +1186,7 @@ SH_R4.1 <- cor.test(Wide_noISI.Even_trimmed$Ratio2.1, Wide_noISI.Odd_trimmed$Rat
 
 SH_R3.2 <- cor.test(Wide_noISI.Even_trimmed$Ratio1.2, Wide_noISI.Odd_trimmed$Ratio1.2)
 SH_R4.2 <- cor.test(Wide_noISI.Even_trimmed$Ratio2.2, Wide_noISI.Odd_trimmed$Ratio2.2)
+
 ```
 
 
@@ -1337,6 +1357,7 @@ Slope_noISI_trim <- type.convert(Slope_noISI)
 SH_RS3 <- cor.test(Slope_noISI_trim$Diff1_slopes_odd, Slope_noISI_trim$Diff1_slopes_even, use = "complete.obs")
 
 SH_RS4 <- cor.test(Slope_noISI_trim$Diff2_slopes_odd, Slope_noISI_trim$Diff2_slopes_even, use = "complete.obs")
+
 ```
 
 ### Summary split-half reliability
@@ -1345,15 +1366,15 @@ SH_RS4 <- cor.test(Slope_noISI_trim$Diff2_slopes_odd, Slope_noISI_trim$Diff2_slo
 
 Split_half <- data.frame(Measure = c("Difference", "Ratio1", "Ratio2", "Regression slopes"),
                          N_ISI_1 = c(SH_D1$parameter+2, SH_R1.1$parameter+2, SH_R1.2$parameter+2, SH_RS1$parameter+2),
-                         Split.half_ISI_1_R = round(c(SH_D1$estimate, SH_R1.1$estimate, SH_R1.2$estimate, SH_RS1$estimate),3),
+                         Split.half_ISI_1_R = round(c(SH_D1$estimate, SH_R1.1$estimate, SH_R1.2$estimate, SH_RS1$estimate),2),
                          N_ISI_2 = c(SH_D2$parameter+2, SH_R2.1$parameter+2, SH_R2.2$parameter+2, SH_RS2$parameter+2),
-                         Split.half_ISI_2 = round(c(SH_D2$estimate, SH_R2.1$estimate, SH_R2.2$estimate, SH_RS2$estimate),3),
+                         Split.half_ISI_2 = round(c(SH_D2$estimate, SH_R2.1$estimate, SH_R2.2$estimate, SH_RS2$estimate),2),
                          N_noISI_1 = c(SH_D3$parameter+2, SH_R3.1$parameter+2, SH_R3.2$parameter+2, SH_RS3$parameter+2),
-                         Split.half_noISI_1 = round(c(SH_D3$estimate, SH_R3.1$estimate, SH_R3.2$estimate, SH_RS3$estimate),3),
+                         Split.half_noISI_1 = round(c(SH_D3$estimate, SH_R3.1$estimate, SH_R3.2$estimate, SH_RS3$estimate),2),
                          N_noISI_2 = c(SH_D4$parameter+2, SH_R4.1$parameter+2, SH_R4.2$parameter+2, SH_RS4$parameter+2),
-                         Split.half_noISI_2 = round(c(SH_D4$estimate, SH_R4.1$estimate, SH_R4.2$estimate, SH_RS4$estimate),3)) 
+                         Split.half_noISI_2 = round(c(SH_D4$estimate, SH_R4.1$estimate, SH_R4.2$estimate, SH_RS4$estimate),2)) 
 
-print(Split_half)             
+print(Split_half)
 ```
 
 #### Check normality and outliers of regression slopes as it is an assumption of the agreement analysis
