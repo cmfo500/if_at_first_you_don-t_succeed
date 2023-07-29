@@ -209,7 +209,7 @@ sd(na.omit(Cor_data$Diff1_slopes))
 #Bayesian correlations ----------------------
 
 # Select variables for Bayesian correlations
-BF.cols <- c("Diff1_slopes", "Diff2_slopes", "Triplets", "Diff_triplets", "Longest", "Enjoyment", "Distance")
+#BF.cols <- c("Diff1_slopes", "Diff2_slopes", "Triplets", "Diff_triplets", "Longest", "Enjoyment", "Distance")
 df <- Cor_data[BF.cols]
 
 # function to get correlation between two variables
@@ -248,14 +248,14 @@ write.csv(Bayes.factors.S1, "results/Bayes.factors_S1.csv")
 #Plotting distance x diff
 
 # Save plot
-tiff("Correl.distance.PL.tiff", units="in", width=6, height=6, res=300)
+png("plots/Correl.distance.PL.png", bg = "white", width = 8, height = 8, units = 'in', res = 600)
 
 plot(Cor_data$Distance, Cor_data$Diff1_slopes, col="black", ylim=c(-.02,.18), xlab="Levenshtein Distance", ylab="RT difference", pch = 1)
 abline(lm(Cor_data$Diff1_slopes ~ Cor_data$Distance))
 par(new=TRUE)
-plot(Cor_data$Distance, Cor_data$Diff2_slopes, col="red" , ylim=c(-.02,.18), xlab="", ylab="", pch =16)
-abline(lm(Cor_data$Diff2_slopes ~ Cor_data$Distance), col = "red")
-legend("topright", c("Session 1","Session 2"), xpd = TRUE, horiz = TRUE, inset = c(0,0), bty = "n", pch = c(1, 16), col = 1:2, cex = 0.8)
+plot(Cor_data$Distance, Cor_data$Diff2_slopes, col="#0066CC" , ylim=c(-.02,.18), xlab="", ylab="", pch = 16)
+abline(lm(Cor_data$Diff2_slopes ~ Cor_data$Distance), col = "#0066CC")
+legend("topright", c("Session 1","Session 2"), xpd = TRUE, horiz = TRUE, inset = c(0,0), bty = "n", pch = c(1, 16), col = c("black", "#0066CC"), cex = 0.8)
 
 dev.off()
 
@@ -424,6 +424,16 @@ write.csv(Desc.table, "results/desc_table.csv")
 
 # Save plot
 png("plots/Distance_distribution.png",  width = 750, height = 675)
-hist(Cor_data$Distance, col = "darkcyan", xlab = "LD distance", ylab = "", breaks = seq(min(na.omit(Cor_data$Distance)), max(na.omit(Cor_data$Distance)), length.out = 11), xlim = c(248, 450), main = "")
+distance.S1 <- hist(Cor_data$Distance, col = "darkcyan", xlab = "LD distance", ylab = "", breaks = seq(min(na.omit(Cor_data$Distance)), max(na.omit(Cor_data$Distance)), length.out = 11), xlim = c(248, 450), main = "")
+
+distance.S1 <- ggplot(Cor_data, aes(x=Distance)) +
+  geom_histogram(color="black", fill="darkcyan") + 
+  scale_x_continuous("\nLD distance - Experiment 1") +
+  coord_cartesian(xlim = c(250, 450)) +
+  scale_y_continuous("Frequency\n") +
+  theme_classic()
+distance.S1
+
 dev.off()
+
 
