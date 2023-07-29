@@ -1,0 +1,416 @@
+---
+title: "Follow-up experiment - data analysis"
+author: "Catia Oliveira"
+date: "17/04/2021"
+output: html_document
+---
+
+# Study 3 - Data analysis
+# Catia Oliveira
+ 
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(echo = TRUE)
+devtools::source_gist("c83e078bf8c81b035e32c3fc0cf04ee8", 
+                      filename = 'render_toc.R')
+```
+
+## Table of Contents
+
+```{r toc, echo=FALSE} 
+render_toc("followup_rmd.Rmd")
+```
+
+### Importing libraries
+
+```{r echo = T,warning=FALSE,message=FALSE}
+
+library(tidyverse)
+library(dplyr)
+library(here)
+library(data.table)
+library(lme4)
+library(WRS2)
+```
+
+# SRT
+
+```{r echo = F, results = 'hide',warning=FALSE,message=FALSE}
+
+Data <- read_csv(here("followup_SRT.csv")) %>%
+  select("Accuracy", "Block", "Probability", "Response.rt", "id") %>%
+  rename("RT" = "Response.rt")
+
+Data$Even_Odd <- rep(c("0", "1"), length.out=nrow(Data)) #even-odd column for split half
+Data$RT <- Data$RT*1000 #multiply RT by 1000 for RT in milliseconds
+Data$logRT <- log(Data$RT) #add log RT for modelling
+
+#select for last 600 trials
+
+#Data <- subset(Data, Block > 2)
+
+Session1_Prob <- subset(Data, Probability == 2)
+Session1_Improb <- subset(Data, Probability == 1)
+
+#Outliers by group------------------------------------
+
+# id OUTLIER REMOVAL BASED ON ACCURACY
+
+#Accuracy
+pptmeanacc <-aggregate(Accuracy ~ id, Data, sum)
+
+#Z scores
+
+pptmeanacc$AccZ <-scale(pptmeanacc$Accuracy, center = TRUE, scale = TRUE) #One outlier - BC48907
+
+keep <- subset(pptmeanacc, Accuracy > 500) %>%
+  pull(id)
+
+Data <- Data %>% filter(id %in% keep)
+
+# id outlier removal based on Response Times------------------------
+#---- ISI
+
+# Mean response times 
+pptmean_RT <-aggregate(RT ~ id, data= Data, mean)
+
+####z scores
+pptmean_RT$RTZ <-scale(pptmean_RT$RT, center = TRUE, scale = TRUE) #one outlier - MC86247
+
+#Removal outlier ids
+#session1
+Data.trimmed <- Data %>%
+  filter(id != "65")
+
+#Check missing data points
+#options(max.print = 200000)
+#which(is.na(Data.trimmed) == T)
+
+# Descriptive statistics ------------------------------------------------------------
+
+Data.trimmed$Probability[Data.trimmed$Probability == 2] <- "Prob"
+Data.trimmed$Probability[Data.trimmed$Probability == 1] <- "Improb"
+
+Desc <- Data.trimmed %>%
+  group_by(id,Probability) %>%
+  summarise(mean = mean(RT))
+
+Wide <- Desc %>%
+  group_by(id) %>%
+  unite(Type, Probability) %>%
+  spread(Type, mean)
+
+Wide <- mutate(Wide, Difference1 = Improb - Prob,
+               Ratio1 = (Improb - Prob)/((Improb + Prob)/2))
+Wide$id <- as.character(Wide$id)
+
+#for split-half reliability
+Desc2 <- Data.trimmed %>%
+  group_by(id, Probability, Even_Odd) %>%
+  summarise(mean = mean(RT))
+
+Wide2 <- Desc2 %>%
+  group_by(id) %>%
+  unite(Type, Probability) %>%
+  spread(Type, mean)
+
+Wide2 <- mutate(Wide2, Difference1 = Improb - Prob,
+                Difference2 = Improb - Prob,
+                Ratio1 = (Improb - Prob)/((Improb + Prob)/2),
+                Ratio2 = (Improb - Prob)/((Improb + Prob)/2))
+
+Data.trimmed$Probability[Data.trimmed$Probability == "Prob"] <- "0"
+Data.trimmed$Probability[Data.trimmed$Probability == "Improb"] <- "1"
+
+#regression slopes ----------------------------------------------
+
+#session 1
+model1 <- lmer(logRT ~ Probability + (Probability|id), data= Data.trimmed, REML=FALSE)
+
+df <- coef(model1)$id[2]
+df <- tibble::rownames_to_column(df, "id") 
+names(df)[names(df) == "Probability1"] <- "Diff_slopes"
+
+#combine difference scores in dataframe
+
+Difference <- as.data.frame(list(Wide, df) %>%
+                              reduce(full_join, by = "id"))
+
+#Sequence learning outliers --------------------------------
+
+#function for eliminating outlier datapoints
+
+remove_outliers <-  function(x) {
+  mn <- mean(x, na.rm = TRUE)
+  sd <- sd(x, na.rm = TRUE)
+  (x > mn + sd * 2.5) | (x < mn - sd * 2.5)
+}
+
+Diff.trim <- data.frame(Difference, stringsAsFactors = FALSE)
+
+#identify outlier datapoints
+cols <- paste0(c("Difference1","Ratio1","Diff_slopes"))
+out <- sapply(Diff.trim[cols], remove_outliers)
+Diff.trim[cols][out] <- NA
+
+Difference_trimmed <- type.convert(Diff.trim)
+
+# Attention ----------------------------------------------------------------
+
+Data_PVT <- read.csv("followup_PVT.csv", header = TRUE) %>%
+  select("id", "Response.rt", "key_resp.keys") %>%
+  rename("RT" = "Response.rt")
+
+Data_PVT <- Data_PVT[complete.cases(Data_PVT$id),]
+Data_PVT <- subset(Data_PVT, RT != 0)
+Data_PVT$RT <- Data_PVT$RT*1000
+Data_PVT$Reciprocal <- 1/(Data_PVT$RT/1000)
+
+#assign 0 or 1 to odd or even trials
+Data_PVT$Even_Odd <- rep(c("0", "1"), length.out=nrow(Data_PVT))
+
+#Attention measures long format
+
+PVT_desc  <- Data_PVT %>% 
+  group_by(id) %>%
+  summarise(false_start = sum(str_count(key_resp.keys, '\\bspace\\b')), 
+            all_false_start = sum(str_count(key_resp.keys, '\\b\\w+\\b')), lapses = sum(RT >= 500), mean_PVT = mean(RT), median = median(RT),
+            mean_recip = mean(Reciprocal))
+
+#Attention measures wide format
+
+PVT_wide <- setDT(PVT_desc)   # coerce to data.table
+
+#eliminate outlier datapoints
+
+df <- data.frame(PVT_wide, stringsAsFactors = FALSE)
+
+cols_pvt <- paste0(c("lapses", "mean_PVT", "mean_recip", "median"))
+mat <- sapply(df[cols_pvt], remove_outliers)
+df[cols_pvt][mat] <- NA
+
+PVT_trimmed <- type.convert(df)
+
+#Split-half reliability
+
+#Attention measures long format
+
+PVT_desc_SH  <- Data_PVT %>% 
+  group_by(id, Even_Odd) %>%
+  summarise(false_start = sum(str_count(key_resp.keys, '\\bspace\\b')), 
+            all_false_start = sum(str_count(key_resp.keys, '\\b\\w+\\b')), lapses = sum(RT >500), mean_PVT = mean(RT),median = median(RT),
+            mean_recip = mean(Reciprocal))
+
+PVT_desc_SH$Even_Odd[PVT_desc_SH$Even_Odd == 0] <- "Even"
+PVT_desc_SH$Even_Odd[PVT_desc_SH$Even_Odd == 1] <- "Odd"
+
+#Attention measures wide format
+
+setDT(PVT_desc_SH)   # coerce to data.table
+PVT_wide_SH <- dcast(PVT_desc_SH, id ~ Even_Odd, 
+                  value.var = c("lapses", "mean_PVT", "mean_recip", "median"))
+
+#eliminate outlier datapoints
+
+df_SH <- data.frame(PVT_wide_SH, stringsAsFactors = FALSE)
+
+cols_pvt_SH <- paste0(c("lapses_Even", "lapses_Odd", "mean_PVT_Even", "mean_PVT_Odd", "mean_recip_Even", "mean_recip_Odd", "median_Even", "median_Odd"))
+out_SH <- sapply(df_SH[cols_pvt_SH], remove_outliers)
+df_SH[cols_pvt_SH][out_SH] <- NA
+
+PVT_trimmed_SH <- type.convert(df_SH)
+
+
+Cor_data <- as.data.frame(list(Difference_trimmed, PVT_trimmed) %>%
+                            reduce(full_join, by = c("id")))
+```
+
+
+
+## Response times per group
+
+``` {r echo = F, warning=FALSE,message=FALSE}
+
+Desc.group <- Data.trimmed %>%
+  group_by(Probability, Block) %>%
+  summarise(mean = round(mean(RT),3), sd= round(sd(RT),3))
+print(Desc.group)
+
+```
+
+## Plotting Response times
+
+``` {r echo = F, warning=FALSE,message=FALSE}
+
+RT <- Data.trimmed %>%
+  group_by(Probability, Block) %>%
+  summarise(mean = mean(RT, na.rm = TRUE),
+            sd = sd(RT, na.rm = TRUE),
+            n = length(which(!is.na(RT)))) %>%
+  mutate(se = sd / sqrt(n),
+         lower.ci= mean - qt(1 - (0.05 / 2), n - 1) * se,
+         upper.ci = mean + qt(1 - (0.05 / 2), n - 1) * se)
+
+RT$Probability <- as.numeric(RT$Probability)
+RT$Probability[RT$Probability == 0] <- "Prob"
+RT$Probability[RT$Probability == 1] <- "Improb"
+
+RT$Epoch <- as.factor(RT$Block)
+
+RT.plot <- ggplot(RT, aes(x= Block, y= mean, group = Probability, color=Probability))+ 
+  geom_errorbar(aes(ymin=lower.ci, ymax=upper.ci), width=.05, 
+                position=position_dodge(0.05),
+                show.legend = FALSE)  + xlab("Epoch") +
+  geom_line(aes(linetype=Probability), size = 1) + 
+  geom_point(aes(shape=Probability)) + coord_cartesian(ylim = c(400, 550)) + scale_color_grey(start=0.85, end=0.2)+
+  theme_classic()
+
+RT.plot <- RT.plot + ylab("mean RT") + xlab("Epoch")
+print(RT.plot)
+
+``` 
+
+
+## Correlations between procedural learning and attention
+
+1. Difference scores
+
+``` {r echo = F}
+
+cor.test(Cor_data$median, Cor_data$Difference1)
+
+```
+
+2. Ratio scores
+
+``` {r echo = F,results='markup'}
+
+cor.test(Cor_data$median, Cor_data$Ratio1)
+
+```
+
+3. Regression slopes
+
+```  {r echo = F,results='markup'}
+
+hist(Cor_data$median)
+hist(Cor_data$Diff_slopes)
+cor.test(Cor_data$median, Cor_data$Diff_slopes)
+
+#robust correlation
+pbcor(Cor_data$median, Cor_data$Diff_slopes, beta = 0.2, ci = TRUE, nboot = 1000, alpha = 0.05)
+```
+
+# Split half reliability - SRT task
+
+```{r echo = F, warning=FALSE}
+
+#Even trials
+Wide_Even <- filter(Wide2, Even_Odd == 0)
+
+trim <- data.frame(Wide_Even, stringsAsFactors = FALSE)
+
+#identify outlier datapoints
+cols_split <- paste0(c("Difference1", "Difference2", "Ratio1", "Ratio2"))
+out <- sapply(trim[cols_split], remove_outliers)
+trim[cols_split][out] <- NA
+
+Wide_Even_trimmed <- type.convert(trim)
+
+# Odd trials
+
+Wide_Odd <- filter(Wide2, Even_Odd == 1)
+
+#eliminate outlier datapoints
+
+odd <- data.frame(Wide_Odd, stringsAsFactors = FALSE)
+
+out2 <- sapply(odd[cols_split], remove_outliers)
+
+odd[cols_split][out2] <- NA
+
+Wide_Odd_trimmed <- type.convert(odd)
+
+
+# Difference scores --------------------------------
+
+SH_D <- cor.test(Wide_Even_trimmed$Difference1, Wide_Odd_trimmed$Difference1)
+
+# Ratio scores --------------------------------------------
+
+SH_R <- cor.test(Wide_Even_trimmed$Ratio1, Wide_Odd_trimmed$Ratio1)
+
+Data.trimmed$Probability[Data.trimmed$Probability == "Prob"] <- "0"
+Data.trimmed$Probability[Data.trimmed$Probability == "Improb"] <- "1"
+
+#regression slopes ----------------------------------------------
+
+
+Session1_Odd <- subset(Data.trimmed, Even_Odd == 1)
+Session1_Even <- subset(Data.trimmed, Even_Odd == 0)
+
+#Split-half reliability for regression slopes ----------------------------------------------------------------
+
+#session 1_odd
+model_odd <- lmer(logRT ~ Probability + (Probability|id),data= Session1_Odd, REML=FALSE)
+
+df_odd <- coef(model_odd)$id
+df_odd <- tibble::rownames_to_column(df_odd, "id") 
+df_odd$Diff1_slopes <- df_odd$Probability
+
+# session 1_even
+model_even <- lmer(logRT ~ Probability + (Probability|id),data= Session1_Even, REML=FALSE)
+
+df_even <- coef(model_even)$id
+df_even <- tibble::rownames_to_column(df_even, "id")
+df_even$Diff2_slopes <- df_even$Probability
+
+Slope_data <- as.data.frame(list(df_even,df_odd) %>% reduce(full_join, by = "id"))
+
+#remove outliers
+
+Slope <- data.frame(Slope_data, stringsAsFactors = FALSE)
+
+cols_slope <- paste0(c("Diff1_slopes", "Diff2_slopes"))
+out_slope <- sapply(Slope[cols_slope],remove_outliers)
+
+Slope[cols_slope][out_slope] <- NA
+
+Slope_trim <- type.convert(Slope)
+
+SH_RS <- cor.test(Slope_trim$Diff1_slopes, Slope_trim$Diff2_slopes, use = "complete.obs")
+
+pbcor(Slope_trim$Diff1_slopes, Slope_trim$Diff2_slopes, beta = 0.2, ci = TRUE, nboot = 1000, alpha = 0.05)
+
+Split_half <- data.frame(Measure = c("Difference", "Ratio", "Regression slopes"),
+                         N = c(SH_D$parameter+2, SH_R$parameter+2, SH_RS$parameter+2),
+                         Split.half = round(c(SH_D$estimate, SH_R$estimate, SH_RS$estimate),3))
+print(Split_half)
+
+```
+
+# Split-half reliability - PVT task
+
+```{r echo = F, warning=FALSE}
+
+PVT_trimmed_SH <- type.convert(df_SH)
+
+lapses1 <- cor.test(PVT_trimmed_SH$lapses_Even, PVT_trimmed_SH$lapses_Odd)
+mean_RT1 <- cor.test(PVT_trimmed_SH$mean_PVT_Even, PVT_trimmed_SH$mean_PVT_Odd)
+reciprocal1 <- cor.test(PVT_trimmed_SH$mean_recip_Even, PVT_trimmed_SH$mean_recip_Odd)
+median1 <- cor.test(PVT_trimmed_SH$median_Even, PVT_trimmed_SH$median_Odd)
+
+PVT_Split_half <- data.frame(Measure = c("Lapses", "Mean", "Median", "Reciprocal"),
+                             Split.half = round(c(lapses1$estimate, mean_RT1$estimate, median1$estimate, reciprocal1$estimate),3))
+
+print(PVT_Split_half)
+
+```
+
+# Check normality of attention measures
+
+```{r echo = F}
+
+par(mfrow=c(3,3))
+histout=apply(PVT_trimmed_SH,2,hist)
+
+```
