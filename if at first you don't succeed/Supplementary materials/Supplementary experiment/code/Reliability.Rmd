@@ -1473,16 +1473,14 @@ t.test(Cor_data_ISI$median_2, Cor_data_noISI$median_2)
 
 ```{r echo = F}
 
-lapses <- cor.test(PVT_trimmed$lapses_1, PVT_trimmed$lapses_2, method = "spearman", exact = FALSE, ci = 0.95)
-
-SpearmanRho(PVT_trimmed$lapses_1, PVT_trimmed$lapses_2, use = "pairwise.complete.obs", conf.level = .95)
+lapses <- DescTools::SpearmanRho(PVT_trimmed$lapses_1, PVT_trimmed$lapses_2, use = "pairwise.complete.obs", conf.level = .95)
 mean_RT <- cor.test(PVT_trimmed$mean_PVT_1, PVT_trimmed$mean_PVT_2, method = "pearson", exact = FALSE)
 reciprocal <- cor.test(PVT_trimmed$mean_recip_1, PVT_trimmed$mean_recip_2, method = "pearson", exact = FALSE)
 median <- cor.test(PVT_trimmed$median_1, PVT_trimmed$median_2, method = "pearson", exact = FALSE)
 tau <- cor.test(PVT_tau_trimmed$Ex_gaussian_PVT_tau_1, PVT_tau_trimmed$Ex_gaussian_PVT_tau_2, method = "pearson", exact = FALSE)
 
 PVT_reliability <- data.frame(Measure = c("Lapses", "Mean RT", "Median", "Reciprocal",  "Ex-gaussian Tau"),
-                              Test_retest = round(c(lapses$estimate, mean_RT$estimate, median$estimate, reciprocal$estimate,
+                              Test_retest = round(c(lapses[1], mean_RT$estimate, median$estimate, reciprocal$estimate,
                                                     tau$estimate),3))
 print(PVT_reliability)
 
@@ -1508,8 +1506,10 @@ histout=apply(PVT_trimmed_SH[,-1],2,hist)
 
 PVT_trimmed_SH <- type.convert(df_SH)
 
-lapses1 <- cor.test(PVT_trimmed_SH$lapses_1_Even, PVT_trimmed_SH$lapses_1_Odd)
-lapses2 <- cor.test(PVT_trimmed_SH$lapses_2_Even, PVT_trimmed_SH$lapses_2_Odd)
+lapses1 <- DescTools::SpearmanRho(PVT_trimmed_SH$lapses_1_Even, PVT_trimmed_SH$lapses_1_Odd, use = "pairwise.complete.obs", conf.level = .95)
+
+lapses2 <- DescTools::SpearmanRho(PVT_trimmed_SH$lapses_2_Even, PVT_trimmed_SH$lapses_2_Odd, use = "pairwise.complete.obs", conf.level = .95)
+
 mean_RT1 <- cor.test(PVT_trimmed_SH$mean_PVT_1_Even, PVT_trimmed_SH$mean_PVT_1_Odd)
 mean_RT2 <- cor.test(PVT_trimmed_SH$mean_PVT_2_Even, PVT_trimmed_SH$mean_PVT_2_Odd)
 reciprocal1 <- cor.test(PVT_trimmed_SH$mean_recip_1_Even, PVT_trimmed_SH$mean_recip_1_Odd)
@@ -1518,8 +1518,8 @@ median1 <- cor.test(PVT_trimmed_SH$median_1_Even, PVT_trimmed_SH$median_1_Odd)
 median2 <- cor.test(PVT_trimmed_SH$median_2_Even, PVT_trimmed_SH$median_2_Odd)
 
 PVT_Split_half <- data.frame(Measure = c("Lapses", "Mean", "Median", "Reciprocal"),
-                             Split.half_1 = round(c(lapses1$estimate, mean_RT1$estimate, median1$estimate, reciprocal1$estimate),3),
-                             Split.half_2 = round(c(lapses2$estimate, mean_RT2$estimate, median2$estimate, reciprocal2$estimate),3))
+                             Split.half_1 = round(c(lapses1[1], mean_RT1$estimate, median1$estimate, reciprocal1$estimate),3),
+                             Split.half_2 = round(c(lapses2[1], mean_RT2$estimate, median2$estimate, reciprocal2$estimate),3))
 
 print(PVT_Split_half)
 
