@@ -207,7 +207,9 @@ conf.int <- predict(model, newdata = data.frame(Reciprocal = range), interval = 
 lines(range, conf.int[,2], col = "orange", lty = 2 )
 lines(range, conf.int[,3], col = "orange", lty = 2 )
 
-ggplot(Cor_data, aes(x = Reciprocal, y = Diff2)) + theme_classic() + geom_point() + geom_smooth(method = lm, se = TRUE, color = "black", fill = "light blue")
+ggplot(Cor_data, aes(x = Reciprocal, y = Diff2)) +
+  theme_classic() + geom_point() +
+  geom_smooth(method = lm, se = TRUE, color = "black", fill = "light blue")
 
 #individual slopes ---------------------------------------
 
@@ -465,12 +467,11 @@ RT.plot <- ggplot(RT, aes(x= Epoch, y= mean, group = Probability, color=Probabil
   facet_wrap(~ Session, scales="free") + coord_cartesian(ylim = c(350, 520)) + scale_color_grey(start=0.85, end=0.2)+
   theme_classic()
 
-RT.plot <- RT.plot + ylab("mean RT") + xlab("Epoch")
+RT.plot <- RT.plot + ylab("mean RT") + xlab("\nEpoch")
 
 # Save plot
-tiff("Procedural_learning.tiff", units="in", width=7, height=5, res=300)
 print(RT.plot)
-dev.off()
+ggsave("plots/Procedural.learning.S2.png", dpi = 1000, height = 5, width = 7, bg = "white")
 
 # Plotting procedural learning across sessions ------------------
 
