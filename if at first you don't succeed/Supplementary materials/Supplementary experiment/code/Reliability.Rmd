@@ -695,13 +695,13 @@ cor.test(ba.stats_ISI$means, ba.stats_ISI$diffs)
 #draw plot 
 BA_ISI <- ggMarginal(ggplot(ba.stats2_ISI, aes(V1,V2)) +
                        geom_hline(yintercept = ba.stats_ISI$lines, linetype="dashed",   size=1, col = "black")+
-                       geom_point(colour = "dodgerblue3", size = 2.5, shape = 18) +
+                       geom_point(colour = "dodgerblue3", size = 2.5) +
                        theme_bw()+
                        theme(legend.position = "bottom", legend.box = "vertical") +
-                       labs(color = "Levenshtein distance  ")+
-                       scale_y_continuous(breaks = seq(-70,70,20))+
-                       coord_cartesian(ylim = c(-68,68))+
-                       labs(x = "\n Average procedural learning", y = "Difference (S2-S1)") +
+                       labs(color = "Levenshtein distance  ") +
+                       scale_y_continuous(breaks = seq(-70,100,20)) +
+                       coord_cartesian(ylim = c(-68,100), xlim = c(0, 70)) +
+                       labs(x = "\n Average procedural learning", y = "Difference in procedural learning between sessions (S2-S1)") +
                        geom_hline(yintercept = ba.stats_ISI$CI.lines, col = "grey", linetype="dashed", size = 0.70), type = "histogram")
 
 print(BA_ISI)
@@ -738,7 +738,7 @@ LOA1_upperbound_ISI <-  mean(na.omit(Diff_ISI_trimmed$Stability1)) + (1.96 * sd(
 # Select variables for Bayesian correlations
 BFcols <- c("Diff1_slopes", "Diff2_slopes", "median_1", "median_2", "Ex_gaussian_PVT_tau_1", "Ex_gaussian_PVT_tau_2", "Age", "Triplets_inc","Triplets_exc")
 
-ISI.BF.df <- Cor_data_ISI[BFcols]
+#ISI.BF.df <- Cor_data_ISI[BFcols]
 
 # function to get correlation between two variables
 ISI.BFcor = function(x,y) extractBF(correlationBF(ISI.BF.df[,x], ISI.BF.df[,y]))$bf
@@ -881,20 +881,22 @@ cor.test(ba.stats_noISI$means, ba.stats_noISI$diffs)
 #draw plot
 BA_noISI <- ggMarginal(ggplot(ba.stats2_noISI, aes(V1,V2)) +
                          geom_hline(yintercept = ba.stats_noISI$lines, linetype="dashed", size=1, col = "black") +
-                         geom_point(colour = "dodgerblue3", size = 2.5, shape =18) +
+                         geom_point(colour = "dodgerblue3", size = 2.5) +
                          theme_bw() + theme(legend.position = "bottom", legend.box = "vertical") +
                          labs(color = "Levenshtein distance  ") +
-                         scale_y_continuous(breaks = seq(-70,70,20)) +
-                         coord_cartesian(ylim = c(-68,68)) +
-                         labs(x = "\n Average procedural learning", y = "Difference (S2-S1)") +
+                         scale_y_continuous(breaks = seq(-70,100,20)) +
+                         coord_cartesian(ylim = c(-68,100), xlim = c(0,70)) +
+                         labs(x = "\n Average procedural learning", y = "\nDifference in procedural learning between sessions (S2-S1)") +
                          geom_hline(yintercept = ba.stats_noISI$CI.lines, col = "grey", linetype="dashed", size = 0.70),
                          type = "histogram")
 
-print(BA_noISI)
+BA_noISI
 
-png("../plots/Bland_Altman.plots.png",  width = 750, height = 675)
-gridExtra::grid.arrange(BA_ISI, BA_noISI, ncol = 2)
-dev.off()
+grid <- plot_grid(BA_ISI, BA_noISI, ncol = 2, labels = c("A", "B"))
+
+grid
+
+ggsave("plots/Bland_Altman.plots6.png", dpi = 1200, height = 9, width = 12, bg = "white")
 ```
 
 ``` {r echo = F, results = 'hide'}
@@ -924,7 +926,7 @@ LOA1_upperbound_noISI <-  mean(na.omit(Diff_noISI_trimmed$Stability1)) + (1.96 *
 
 ```{r noISI Bayesian correlations, eval = FALSE, warning=FALSE, message=FALSE}
 
-noISI.BF.df <- Cor_data_noISI[BFcols]
+#noISI.BF.df <- Cor_data_noISI[BFcols]
 
 # function to get correlation between two variables
 noISI.BFcor = function(x,y) extractBF(correlationBF(noISI.BF.df[,x], noISI.BF.df[,y]))$bf

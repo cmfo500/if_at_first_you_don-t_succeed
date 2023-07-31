@@ -331,7 +331,7 @@ ba.stats_12 <- bland.altman.stats(Slopes$Diff2_slopes, Slopes$Diff1_slopes)
 Bland_Altman_12 <- print(ggMarginal((bland.altman.plot(Slopes$Diff2_slopes, Slopes$Diff1_slopes,
                                                        two = 1.96, mode = 1, graph.sys = "ggplot2",
                                                        conf.int = .95, pch = 19, ylim = c(-0.00, 0.10)) +
-                                                       labs(y = "Difference (S2-S1)")),
+                                                       labs(y = "Difference in procedural learning between sessions (S2-S1)")),
                                                        type = "histogram", size=4))
 
 ba.stats_23 <- bland.altman.stats(Slopes$Diff3_slopes, Slopes$Diff2_slopes)
@@ -339,7 +339,7 @@ ba.stats_23 <- bland.altman.stats(Slopes$Diff3_slopes, Slopes$Diff2_slopes)
 Bland_Altman_23 <- print(ggMarginal((bland.altman.plot(Slopes$Diff3_slopes, Slopes$Diff2_slopes,
                                                        two = 1.96, mode = 1, graph.sys = "ggplot2",
                                                        conf.int = .95, pch = 19, ylim = c(-0.050, 0.10)) +
-                                                       labs(y = "Difference (S3-S2)")),
+                                                       labs(y = "Difference in procedural learning between sessions(S3-S2)")),
                                                        type = "histogram", size=4))
 
 #Bland-Atlman with adjustable axis ----------------------------------------
@@ -357,8 +357,10 @@ BA12 <- ggMarginal(ggplot(ba.stats12, aes(V1,V2)) +
                      geom_point(colour = "dodgerblue3", size = 2.5) +
                      theme_bw()+theme(legend.position = "bottom",
                      legend.box = "vertical") + labs(color = "Levenshtein distance  ") +
-                     scale_y_continuous(breaks = seq(-70,70,20))+  coord_cartesian(ylim = c(-68,68))+
-                     labs(x = "\n Average procedural learning", y = "Difference (S2-S1)") +
+                     scale_y_continuous(breaks = seq(-70,70,20)) +
+                     scale_x_continuous(breaks = seq(20,70,10)) +
+                     coord_cartesian(ylim = c(-68,68))+
+                     labs(x = "\n Average procedural learning", y = "Difference in procedural learning between sessions (S2-S1)") +
                      geom_hline(yintercept = ba12$CI.lines, col = "grey", linetype="dashed", size = 0.70), type = "histogram")
 
 BA12
@@ -371,18 +373,25 @@ ba23$lines
 ba23$CI.lines
 ba.stats23 <- as.data.frame(cbind(ba23$means, ba23$diffs))
 
-BA23 <- ggMarginal(ggplot(ba.stats23, aes(V1,V2)) +geom_hline(yintercept = ba23$lines, linetype="dashed", size=1, col = "black")+ geom_point(colour = "dodgerblue3", size = 2.5)+
-                      theme_bw()+theme(legend.position = "bottom",
-                     legend.box = "vertical") + labs(color = "Levenshtein distance  ")+
-                     scale_y_continuous(breaks = seq(-70,70,20))+  coord_cartesian(ylim = c(-68,68))+
-                     labs(x = "\n Average procedural learning", y = "Difference (S3-S2)") +
+BA23 <- ggMarginal(ggplot(ba.stats23, aes(V1,V2)) +
+                     geom_hline(yintercept = ba23$lines, linetype="dashed", size=1, col = "black") +
+                     geom_point(colour = "dodgerblue3", size = 2.5) +
+                     theme_bw() + theme(legend.position = "bottom",
+                     legend.box = "vertical") + labs(color = "Levenshtein distance  ") +
+                     scale_y_continuous(breaks = seq(-70,70,20)) +
+                     scale_x_continuous(breaks = seq(20,70,10)) +
+                     coord_cartesian(ylim = c(-68,68)) +
+                     labs(x = "\n Average procedural learning",
+                          y = "Difference in procedural learning between sessions (S3-S2)") +
                      geom_hline(yintercept = ba23$CI.lines, col = "grey", linetype="dashed", size = 0.70), type = "histogram")
 
 BA23
 
-png("plots/Bland_Altman.plots.png",  width = 750, height = 675)
-gridExtra::grid.arrange(BA12, BA23, ncol = 2)
-dev.off()
+grid <- plot_grid(BA12, BA23, ncol = 2, labels = c("A", "B"))
+
+grid
+
+ggsave("plots/Bland_Altman.plots.png", dpi = 1400, height = 8, width = 12, bg = "white")
 
 #Explicit awareness comparison with simulation -------------------------------------
 

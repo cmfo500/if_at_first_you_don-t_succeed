@@ -15,7 +15,7 @@ Data <- read.csv("data/Data_final_RT.csv", header = TRUE)
 
 Data$logRT <- log(Data$RT)
 
-#Data <- subset(Data, Epoch > 2)
+Data <- subset(Data, Epoch > 2)
 #separate sessions
 
 Session1_Data <- subset(Data, Session == 1)
@@ -135,14 +135,16 @@ names(df2.gamma)[names(df2.gamma) == "Probability1"] <- "Diff2_slopes.gamma"
 
 #combine difference scores in dataframe
 
-Difference <- as.data.frame(list(Wide, df, df2, df.gamma, df2.gamma) %>% reduce(full_join, by = "Participant"))
+Difference <- as.data.frame(list(Wide, df, df2, df.gamma, df2.gamma) %>%
+                              reduce(full_join, by = "Participant"))
 
 #individual differences --------------------------------------------------
 
 #explicit awareness measures
 
 ## Total triplets
-Triplets <- aggregate(Triplet_Match ~ Participant, Data.trimmed, mean) %>% rename(Triplets = Triplet_Match)
+Triplets <- aggregate(Triplet_Match ~ Participant, Data.trimmed, mean) %>%
+  rename(Triplets = Triplet_Match)
 
 ## diff-triplets
 Diff_Triplets <- aggregate(Diff_triplets ~ Participant, Data.trimmed, mean)
@@ -158,7 +160,8 @@ Distance <- aggregate(Distance ~ Participant, Data.trimmed, mean)
 
 #combine difference scores and individual differences variables in dataframe
 
-Cor <- as.data.frame(list(Difference, Triplets, Diff_Triplets, Longest, Enjoyment, Distance) %>% reduce(full_join, by = "Participant"))
+Cor <- as.data.frame(list(Difference, Triplets, Diff_Triplets, Longest, Enjoyment, Distance) %>%
+                       reduce(full_join, by = "Participant"))
 
 #remove outliers
 
@@ -209,7 +212,7 @@ sd(na.omit(Cor_data$Diff1_slopes))
 #Bayesian correlations ----------------------
 
 # Select variables for Bayesian correlations
-#BF.cols <- c("Diff1_slopes", "Diff2_slopes", "Triplets", "Diff_triplets", "Longest", "Enjoyment", "Distance")
+BF.cols <- c("Diff1_slopes", "Diff2_slopes", "Triplets", "Diff_triplets", "Longest", "Enjoyment", "Distance")
 df <- Cor_data[BF.cols]
 
 # function to get correlation between two variables
@@ -343,7 +346,6 @@ icc(df, model = c("twoway"),
     type = c("agreement"), 
     unit = c("average"), r0 = 0, conf.level = 0.95)
 
-
 fit0 <- lmer(Difference ~ Session + (1| Participant), data_long)
 performance::icc(fit0)
 
@@ -372,11 +374,11 @@ BA <- ggMarginal(ggplot(ba.stats2, aes(V1,V2, col = V3)) + geom_point(size = 2.5
                     legend.box = "vertical") + labs(color = "Levenshtein distance  ")+
                      geom_hline(yintercept = ba$lines, linetype="dashed", size=1, col = "black")+
                    scale_y_continuous(breaks = seq(-70,70,20))+  coord_cartesian(ylim = c(-68,68))+
-                     labs(x = "\n Average procedural learning", y = "Difference (S3-S2)")+
+                     labs(x = "\n Average procedural learning", y = "Difference in procedural learning between sessions (S2-S1)")+
                      geom_hline(yintercept = ba$CI.lines, col = "grey", linetype="dashed", size = 0.70), type = "histogram")
 
 # Save plot
-tiff("Bland_Altman.plot.tiff", units="in", width=7, height=5, res=300)
+png("plots/Bland_Altman.plot.png", units="in", width=7, height=7, res=2000)
 BA
 dev.off()
 
