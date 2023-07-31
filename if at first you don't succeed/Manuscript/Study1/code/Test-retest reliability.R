@@ -431,7 +431,7 @@ distance.S1 <- hist(Cor_data$Distance, col = "darkcyan", xlab = "LD distance", y
 distance.S1 <- ggplot(Cor_data, aes(x=Distance)) +
   geom_histogram(color="black", fill="darkcyan") + 
   scale_x_continuous("\nLD distance - Experiment 1") +
-  coord_cartesian(xlim = c(250, 450)) +
+  coord_cartesian(xlim = c(200, 450)) +
   scale_y_continuous("Frequency\n") +
   theme_classic()
 distance.S1

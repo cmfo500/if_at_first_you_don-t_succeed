@@ -34,7 +34,7 @@ Distance - Levenshtein distance between sequences learnt at time 1 and 2;
 Even_Odd - Signals whether the trial is even or odd - useful for split-half reliability analyses;
 
 3. There is also a result section where we included the output from the mixed modelling as these models take a fairly long time to run.
-For the influential cases, since we had to resort to the High performance computing at York, we also included the output from those analyses.
+For the influential cases, since we had to resort to the High-performance computing at York, we also included the output from those analyses.
 We have run the same models in Julia and these ran a lot quicker, so we can provide that code if necessary.
 
 If any information of relevance is missing please forward any requests to cmfo500@york.ac.uk
