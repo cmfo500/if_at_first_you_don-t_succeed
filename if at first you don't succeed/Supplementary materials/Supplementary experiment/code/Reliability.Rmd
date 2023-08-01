@@ -46,6 +46,7 @@ ipak(listOfPackages)
 # SRT
 
 ```{r echo = F, results = 'hide',warning=FALSE,message=FALSE}
+
 Data <- read.csv("../data/Data_SuppExp.csv", header = TRUE)
 
 #add missing columns-------
@@ -78,7 +79,7 @@ Group <- desc %>%
 
 #select for last 600 trials
 
-Data <- subset(Data, Epoch > 2)
+#Data <- subset(Data, Epoch > 2)
 
 #To estimate interval between sessions
 Data <- tidyr::separate(Data, col = date, into = c("day","time"), sep = "_")
@@ -196,9 +197,6 @@ Data.trimmed2 <- subset(Data.trimmed, Epoch > 2)
 # Preprocessing
 
 ```{r echo = F, results = 'hide',warning=FALSE,message=FALSE}
-#Check missing data points
-#options(max.print = 200000)
-#which(is.na(Data.trimmed) == T)
 
 # Descriptive statistics ------------------------------------------------------------
 
@@ -294,7 +292,7 @@ Session2_Data <- subset(Data.trimmed, Session == 2)
 # noISI regression slopes ----------------------------------------------
 
 #session 1
-model1.noISI <- lmer(logRT ~ Probability*Group + (Probability|Participant),data= Session1_Data, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+model1.noISI <- lmer(logRT ~ Probability*Group + (Probability|Participant),data = Session1_Data, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
 
 df.noISI <- as.data.frame(coef(model1.noISI)$Participant) %>%
   tibble::rownames_to_column("Participant") %>%
@@ -306,7 +304,7 @@ df.noISI <- merge(df.noISI, Group, by = c("Participant")) %>%
   dplyr::select(Participant, Diff1_slopes)
 
 # session 2
-model2.noISI <- lmer(logRT ~ Probability*Group + (Probability|Participant),data= Session2_Data, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+model2.noISI <- lmer(logRT ~ Probability*Group + (Probability|Participant),data = Session2_Data, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
 
 df2.noISI <- as.data.frame(coef(model2.noISI)$Participant) %>%
   tibble::rownames_to_column("Participant") %>%
@@ -325,8 +323,8 @@ Slopes2 <- rbind(df2.ISI, df2.noISI)
 # Outlier removal by group
 
 ```{r, echo = F, results = 'hide',warning=FALSE,message=FALSE}
-#combine difference scores in dataframe
 
+#combine difference scores in dataframe
 SL.data <- as.data.frame(list(Wide, Slopes1, Slopes2) %>%
                            reduce(full_join, by = "Participant"))
 
@@ -360,11 +358,13 @@ Diff_noISI_trimmed <- type.convert(Diff_noISI_trim)
 
 # Merge dataframes by group
 Difference <- rbind(Diff_ISI_trimmed, Diff_noISI_trimmed)
+
 ```
 
 # Attention
 
 ```{r, echo = F, results = 'hide',warning=FALSE,message=FALSE}
+
 # Attention ----------------------------------------------------------------
 
 Data_PVT <- read.csv("../data/PVT_results_SuppExp.csv", header = TRUE)
@@ -462,7 +462,6 @@ PVT_tau_trimmed <- dcast(Ex_gaussian_PVT_trimmed, Participant ~ Session,
 # Explicit awareness data
 
 ```{r, echo = F, results = 'hide',warning=FALSE,message=FALSE}
-#Explicit data -----------------------------
 
 Explicit_data <- read.csv("../data/Explicit_awareness_data_SuppExp.csv", header = TRUE)
 
@@ -540,6 +539,7 @@ describe.by(Cor_data$Age, Cor_data$Group)
 # Response times per group
 
 ``` {r echo = F, warning=FALSE,message=FALSE}
+
 RT <- Data.trimmed %>%
   group_by(Probability, Epoch, Session, Group) %>%
   summarise(mean = mean(RT, na.rm = TRUE),
@@ -588,9 +588,8 @@ RT.plot <- ggplot(RT, aes(x = Epoch, y = mean, group = series, color = Group)) +
 RT.plot <- RT.plot + ylab("mean RT") + xlab("Epoch")
 
 # Save plot
-tiff("Procedural_learning.tiff", units="in", width=7, height=5, res=300)
-print(RT.plot)
-dev.off()
+RT.plot
+ggsave("plots/Procedural_learning.png", dpi = 1400, height = 9, width = 12, bg = "white")
 
 ``` 
 

@@ -45,12 +45,12 @@ Marianna E. Hayiou-Thomas, and Lisa. M. Henderson at the Department of Psycholog
 	- RT: Time elapsed between stimulus presentation and motor response;
 	- Session: Indicates whether testing occurred in the first or second session;
 	- date: Time of completion of the Psychomotor vigilance task;
-	- key_resp.keys: Indicates how many times participants pressed "space" on the keyboard before stimuli appearance often referred to as "false starts" (each press
+	- key_resp.keys: Indicates how many times participants pressed "space" on the keyboard before stimuli appeared often referred to as "false starts" (each press
 	  is represented by one ["space"])
-	- key_resp.rt: Indicates when the false starts occured before a new stimulus presentation;
+	- key_resp.rt: Indicates when the false starts occurred before a new stimulus presentation;
 
 3. There is also a result section where we included the output from the mixed modelling as these models take a fairly long time to run.
-For the influential cases, since we had to resort to the High performance computing at York, we also included the output from those analyses.
+For the influential cases, since we had to resort to the High-performance computing at York, we also included the output from those analyses.
 We have run the same models in Julia and these ran a lot quicker, so we can provide that code if necessary.
 
 If any information of relevance is missing please forward any requests to cmfo500@york.ac.uk
