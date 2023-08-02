@@ -16,6 +16,7 @@ Data <- read.csv("data/Data_final_RT.csv", header = TRUE)
 Data$logRT <- log(Data$RT)
 
 Data <- subset(Data, Epoch > 2)
+
 #separate sessions
 
 Session1_Data <- subset(Data, Session == 1)
@@ -78,14 +79,17 @@ Desc <- Data.trimmed %>%
   dplyr::group_by(Participant, Session, Probability) %>%
   summarise(mean = mean(RT))
 
-Wide <- Desc %>% group_by(Participant) %>% unite(Type, Probability, Session, sep = "_") %>% spread(Type, mean)
+Wide <- Desc %>%
+  group_by(Participant) %>%
+  unite(Type, Probability, Session, sep = "_") %>%
+  spread(Type, mean)
 
-Wide <- mutate(Wide, Difference1 = Improb_1 - Prob_1)
-Wide <- mutate(Wide, Difference2 = Improb_2 - Prob_2)
-Wide <- mutate(Wide, Ratio1.1 = (Improb_1 - Prob_1)/((Improb_1 + Prob_1)/2))
-Wide <- mutate(Wide, Ratio2.1 = (Improb_2 - Prob_2)/((Improb_2 + Prob_2)/2))
-Wide <- mutate(Wide, Ratio1.2 = (Improb_1 - Prob_1)/Improb_1)
-Wide <- mutate(Wide, Ratio2.2 = (Improb_2 - Prob_2)/Improb_2)
+Wide <- mutate(Wide, Difference1 = Improb_1 - Prob_1,
+               Difference2 = Improb_2 - Prob_2,
+               Ratio1.1 = (Improb_1 - Prob_1)/((Improb_1 + Prob_1)/2),
+               Ratio2.1 = (Improb_2 - Prob_2)/((Improb_2 + Prob_2)/2),
+               Ratio1.2 = (Improb_1 - Prob_1)/Improb_1,
+               Ratio2.2 = (Improb_2 - Prob_2)/Improb_2)
 
 mean(na.omit(Wide$Difference1))
 mean(na.omit(Wide$Difference2))
@@ -325,7 +329,6 @@ cor.test(Data.high$Diff1_slopes, Data.high$Diff2_slopes)
 
 colSums(!is.na(Data.high))
 
-
 #Comparison of explicit awareness scores with simulation --------------------------------------------
 
 t.test(Triplets$Triplets, mu = 29.98, alternative = "two.sided")
@@ -402,20 +405,22 @@ RT$Epoch <- as.factor(RT$Epoch)
 RT.plot <- ggplot(RT, aes(x= Epoch, y= mean, group = Probability, color=Probability))+ 
   geom_errorbar(aes(ymin=lower.ci, ymax=upper.ci), width=.05, 
                 position=position_dodge(0.05),
-                show.legend = FALSE)  + xlab("Epoch") +
+                show.legend = FALSE)  + xlab("\nEpoch") +
   geom_line(aes(linetype=Probability), size = 1) + 
-  geom_point(aes(shape=Probability))+
-  facet_wrap(~ Session, scales="free") + coord_cartesian(ylim = c(350, 520)) + scale_color_grey(start=0.85, end=0.2)+
-  theme_classic()
-
+  geom_point(aes(shape=Probability)) +
+  facet_wrap(~ Session, scales="free") +
+  coord_cartesian(ylim = c(350, 520)) +
+  scale_color_grey(start=0.85, end=0.2) +
+  theme_classic() +
+  theme(text = element_text(size = 18))
+  
 RT.plot <- RT.plot + ylab("mean RT") + xlab("Epoch")
 
 # Save plot
-tiff("RT.plot.tiff", units="in", width=7, height=5, res=300)
 print(RT.plot)
-dev.off()
+ggsave("plots/RT.plot.png", dpi = 1600, height = 10, width = 14, bg = "white")
 
-#Descriptives table - RT
+#Descriptive table - RT
 
 library(data.table)
 Desc.table <- dcast(setDT(RT), Epoch~Probability+Session, value.var=c('mean', "sd"))
