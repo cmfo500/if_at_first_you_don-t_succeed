@@ -1,2 +1,6 @@
-# if_at_first_you_don-t_succeed
-code and data for paper Reliability Of The Serial Reaction Time Task: If At First You Don't Succeed, Try Try Try Again
+
+code and data for paper "Reliability Of The Serial Reaction Time Task: If At First You Don't Succeed, Try Try Try Again" available at https://osf.io/fn9mw/
+
+abstract:
+
+Procedural memory is involved in the acquisition and control of skills and habits that underlie rule and procedural learning, including the acquisition of grammar and phonology. The Serial Reaction Time task (SRTT), commonly used to assess procedural learning, has been shown to have poor stability (test-retest reliability). We investigated factors that may affect the stability of the SRTT in adults. Experiment 1 examined whether the similarity of sequences learned in two sessions would impact stability: test-retest correlations were low regardless of sequence similarity (r < .25). Experiment 2 added a third session to examine whether individual differences in learning would stabilise with further training. There was a small (but nonsignificant) improvement in stability for later sessions (session 1-2: r = .43; session 2-3: r = .60). Stability of procedural learning on the SRTT remained suboptimal in all conditions, posing a serious obstacle to the use of this task as a sensitive predictor of individual differences and ultimately theoretical advance.
