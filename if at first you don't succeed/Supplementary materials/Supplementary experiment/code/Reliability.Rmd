@@ -38,7 +38,7 @@ install.packages(retimes, repos=NULL, type="source")
 
 ```{r echo = T,warning=FALSE,message=FALSE}
 
-listOfPackages <- c("BlandAltmanLeh", "tidyverse", "dplyr", "magrittr", "lme4", "irr", "ggExtra", "psych", "ggplot2", "data.table", "stringr", "lmerTest", "dfoptim", "optimx", "stats", "GLMMadaptive", "EnvStats", "sjPlot", "emmeans", "patchwork", "sjPlot", "sjmisc", "tidyr", "broom", "LaplacesDemon", "broom.mixed", "DHARMa", "retimes", "BayesFactor", "data.table")
+listOfPackages <- c("BlandAltmanLeh", "tidyverse", "dplyr", "magrittr", "lme4", "irr", "ggExtra", "psych", "ggplot2", "data.table", "stringr", "lmerTest", "dfoptim", "optimx", "stats", "GLMMadaptive", "EnvStats", "sjPlot", "emmeans", "patchwork", "sjPlot", "sjmisc", "tidyr", "broom", "LaplacesDemon", "broom.mixed", "DHARMa", "retimes", "BayesFactor", "data.table", "cowplot")
 
 ipak(listOfPackages)
 ```
@@ -79,7 +79,7 @@ Group <- desc %>%
 
 #select for last 600 trials
 
-#Data <- subset(Data, Epoch > 2)
+Data <- subset(Data, Epoch > 2)
 
 #To estimate interval between sessions
 Data <- tidyr::separate(Data, col = date, into = c("day","time"), sep = "_")
@@ -1062,6 +1062,7 @@ interactions::interact_plot(reliability.model.lm, pred = scaled.Diff1_slopes, mo
 
 ``` {r echo = F}
 
+# correlations
 hist(log(Diff_ISI_trimmed$Age))
 qqnorm(log(Diff_ISI_trimmed$Age), pch = 1, frame = FALSE)
 median(log(Diff_ISI_trimmed$Age))
@@ -1094,6 +1095,13 @@ cor.test(older_noISI$Difference1, older_noISI$Difference2)
 cor.test(younger_noISI$Diff1_slopes, younger_noISI$Diff2_slopes)
 cor.test(older_noISI$Diff1_slopes, older_noISI$Diff2_slopes)
 
+# models
+
+ISI.age.model <- lm(Diff2_slopes ~ Diff1_slopes*Age, data = Diff_ISI_trimmed) # no effect of age on reliability
+summary(ISI.age.model)
+
+noISI.age.model <- lm(Diff2_slopes ~ Diff1_slopes*Age, data = Diff_noISI_trimmed) # no effect of age on reliability
+summary(noISI.age.model)
 ```
 
 ## Split-half reliability
