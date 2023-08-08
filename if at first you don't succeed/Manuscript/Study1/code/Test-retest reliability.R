@@ -15,7 +15,7 @@ Data <- read.csv("data/Data_final_RT.csv", header = TRUE)
 
 Data$logRT <- log(Data$RT)
 
-Data <- subset(Data, Epoch > 2)
+Data <- subset(Data, Epoch > 2) # comment this line if overall reliability estimates are desired
 
 #separate sessions
 
@@ -276,11 +276,12 @@ model.dist <- lm(scale(Diff2_slopes) ~ scale(Diff1_slopes)*scale(Distance), data
 
 summary(model.dist)
 confint(model.dist)
+p.adjust(summary(model.dist)$coefficients[,"Pr(>|t|)"], "holm")
 
 anova(model.rel, model.dist)
 
 # We found no evidence that age influenced test-retest reliability as indicated by non-significant the interaction
-# between procedural learning in Session 1 and distance, β=0.061, SE=0.089, t = 0.688, p = 0.493.
+# between procedural learning in Session 1 and Levenshtein distance
 
 #test-retest reliability per high and low similarity groups ---------------------
 
@@ -323,7 +324,6 @@ high_sim <- as.data.frame(cor(Data.high, method = "pearson", use = "pairwise.com
 
 summary(na.omit(Data.high))
 sd(na.omit(Data.high$Diff1_slopes))
-sd(na.omit(Data.high$Diff2_slopes))
 
 cor.test(Data.high$Diff1_slopes, Data.high$Diff2_slopes)
 
