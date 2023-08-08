@@ -1,5 +1,5 @@
 # Manuscript title: "Reliability of the Serial Reaction Time task: If at first you don't succeed, try try try again"
-# Author: "Cátia Margarida Oliveira, Marianna E. Hayiou-Thomas, Lisa Henderson; University of York"
+# Author: "C?tia Margarida Oliveira, Marianna E. Hayiou-Thomas, Lisa Henderson; University of York"
 
 # This script was adapted from the analyses performed by Haines et al. (2020). Theoretically Informed Generative Models Can Advance the Psychological and Brain Sciences: Lessons from the Reliability Paradox. PsyArXiv. https://doi.org/10.31234/osf.io/xr7y3
 
@@ -19,8 +19,9 @@ keep <- Data.trimmed %>% filter(Session == 2) %>% pull(Participant)
 
 Data.trimmed <- Data.trimmed %>% filter(Participant %in% keep)
 
-
-Participant <- Data.trimmed %>% group_by(Participant) %>% summarise(Participant = Participant[2])
+Participant <- Data.trimmed %>%
+  group_by(Participant) %>%
+  summarise(Participant = Participant[2])
 
 n_subj <- length(Participant$Participant)
 
