@@ -1,0 +1,275 @@
+---
+title: "reliability_Sample_size"
+author: "Catia"
+date: "2023-07-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Import functions
+
+```{r}
+source("utils.R")
+```
+
+# Import libraries
+
+```{r echo = T,warning=FALSE,message=FALSE}
+
+listOfPackages <- c("tidyr", "dplyr", "ggplot2", "readr", "haven", "psych", "lmerTest", "lme4","svMisc", "gridExtra", "cowplot", "viridis", "hrbrthemes")
+
+ipak(listOfPackages)
+
+```
+
+# Set seed
+
+```{r}
+
+set.seed(27)
+
+```
+
+# Read data
+
+You can also embed plots, for example:
+
+```{r data, echo=FALSE}
+
+data <- read_csv("Data.all.csv")
+
+pts <- data %>% 
+  group_by(Participant, Session) %>% 
+  summarise(mean = mean(RT)) %>% 
+  ungroup() %>% 
+  group_by(Participant) %>%
+  dplyr::filter(n() == 1) %>%
+  ungroup()
+
+SRT_master <- data %>% 
+  filter(Epoch > 2) %>% 
+  filter(!Participant %in% pts$Participant)
+
+```
+
+
+# check whether there are sufficient differences between studies
+
+```{r model comparison, echo=FALSE}
+
+model1.simple <- lmer(logRT ~ Probability + (Probability|Participant), data = SRT_master[SRT_master$Session == 2,], REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+model1 <- lmer(logRT ~ Probability*Study + (Probability|Participant), data = SRT_master[SRT_master$Session == 2,], REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+anova(model1.simple, model1)
+
+model2.simple <- lmer(logRT ~ Probability + (Probability|Participant), data = SRT_master[SRT_master$Session == 2,], REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+model2 <- lmer(logRT ~ Probability*Study + (Probability|Participant), data = SRT_master[SRT_master$Session == 2,], REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+anova(model2.simple, model2)
+
+```
+
+# Set permutations
+
+```{r warning=FALSE}
+
+n_subj <- length(unique(SRT_master$Participant)) # Number of subjects
+
+n <- 10
+rep <- 100
+DS.rels.rt <- matrix(0,rep,18)
+DS.ci <- matrix(0,rep,18)
+MB.rels.rt<- matrix(0,rep,18)
+MB.ci <- matrix(0,rep,18)
+
+
+for (i in 1:18){
+  for (j in 1:rep){
+    ids <- sample(unique(SRT_master$Participant),n,replace = F)
+    samp <- SRT_master[SRT_master$Participant %in% ids,]
+    
+    # RT
+    SRT_reli <- subset(samp)
+    Wide <- SRT_reli %>%
+      group_by(Participant, Session, Probability) %>%
+      summarise(mean = mean(RT)) %>%
+      group_by(Participant) %>%
+      unite(Type, Probability, Session, sep = "_") %>%
+      spread(Type, mean) %>% 
+      mutate(Difference1 = Improb_1 - Prob_1,
+             Difference2 = Improb_2 - Prob_2)
+    
+    # computing model based reliability
+    model1 <- lmer(logRT ~ Probability*Study + (Probability|Participant), data = SRT_reli[SRT_reli$Session == 1,], REML=FALSE,    control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+    
+    df <- as.data.frame(coef(model1)$Participant) %>%
+      tibble::rownames_to_column("Participant") %>% dplyr::rename(Diff1_slopes = ProbabilityProb) %>%
+      dplyr::select(Participant, Diff1_slopes)
+    
+    Wide <- merge(df, Wide, by = c("Participant"))
+    
+    # session 2
+    model2 <- lmer(logRT ~ Probability*Study + (Probability|Participant), data = SRT_reli[SRT_reli$Session == 2,], REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+    
+    df2 <- as.data.frame(coef(model2)$Participant) %>%
+      tibble::rownames_to_column("Participant") %>%
+      dplyr::rename(Diff2_slopes = ProbabilityProb) %>%
+      dplyr::select(Participant, Diff2_slopes)
+    
+    Wide <- merge(df2, Wide, by = c("Participant"))
+    
+    # remove outliers
+    trim <- data.frame(Wide, stringsAsFactors = FALSE)
+
+    # identify outlier datapoints
+    cols <- paste0(c(names(Wide[-1])))
+    out <- sapply(trim[cols], remove_outliers)
+    trim[cols][out] <- NA
+    Wide <- type.convert(trim)
+    
+    # compute and store reliability estimates and CIs
+    DS.rels.rt[j,i] <- cor.test(Wide$Difference1, Wide$Difference2)$estimate
+    DS.ci[j,i] <- cor.test(Wide$Difference1, Wide$Difference2)$conf.int[2] - cor.test(Wide$Difference1, Wide$Difference2)$conf.int[1]
+    
+    MB.rels.rt[j,i] <- cor.test(Wide$Diff1_slopes, Wide$Diff2_slopes)$estimate
+    MB.ci[j,i] <- cor.test(Wide$Diff1_slopes, Wide$Diff2_slopes)$conf.int[2] - cor.test(Wide$Diff1_slopes, Wide$Diff2_slopes)$conf.int[1]
+    
+    #print(j)
+  }
+  n <- n+10
+  progress(i)
+}
+
+```
+
+
+# Plotting
+
+## Difference scores
+
+```{r}
+write.csv(DS.rels.rt, "outputs/DS.rels.rt.last600.csv")
+write.csv(DS.ci, "outputs/DS.ci.last600.csv")
+
+## Difference scores
+
+DS_rels_rt <- as.data.frame(DS.rels.rt)
+DS_rels_rt <- gather(DS_rels_rt,Size,Rel)
+DS_rels_rt$Size <- rep(1:18,each = rep)*10
+
+n.breaks.rel <- seq(-.2,1.2, 0.2)
+n.breaks.ci <- seq(0,1.4, 0.2)
+
+# Boxplot
+boxplot1 <- DS_rels_rt %>%
+  ggplot(aes(x=as.factor(Size), y=Rel, fill = as.factor(Size))) +
+    geom_boxplot() +  
+    scale_fill_viridis(discrete = TRUE, alpha=0.6, option="A") +
+    geom_jitter(color="black", size=0.4, alpha=0.9) +
+    scale_y_continuous(limits = c(-0.35,1.10), breaks = n.breaks.rel) +
+    theme_ipsum() +
+    theme(legend.position="none", axis.text.x = element_text(size = 30))
+
+# Lineplot
+DS_rels_rt <- DS_rels_rt %>%
+  group_by(Size) %>%
+  summarise(relsmean = mean(Rel))
+
+DS_ci <- as.data.frame(DS.ci)
+DS_ci <- gather(DS_ci,Size,Rel)
+DS_ci$Size <- rep(1:18,each = rep)*10
+DS_ci <- DS_ci %>%
+  group_by(Size) %>%
+  summarise(cimean = mean(Rel))
+DS_rels_rt$ci <- DS_ci$cimean
+  
+g1 <- ggplot(DS_rels_rt,aes(Size,relsmean)) + geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  geom_linerange(aes(ymin = relsmean - ci/2,ymax = relsmean + ci/2),size = 1.2) +
+  theme_classic(base_size = 24) + xlab("Sample size") + ylab(expression(paste("Difference scores"))) +
+  scale_y_continuous(limits = c(-0.35,1.35), breaks = n.breaks.rel) +
+  geom_hline(yintercept = .2,linetype = 2)
+
+g2 <- ggplot(DS_rels_rt,aes(Size,ci)) + geom_line(size = 1.2) +
+  geom_point(size = 3) + scale_y_continuous(limits = c(0.1,1.55), breaks = n.breaks.ci) +
+  theme_classic(base_size = 24) + xlab("Sample size") + ylab(expression(paste("Difference scores 95 % CI")))
+```
+
+
+## Slopes
+
+```{r}
+
+write.csv(MB.rels.rt, "outputs/MB.rels.rt.last600.csv")
+write.csv(MB.ci, "outputs/MB.ci.last600.csv")
+
+MB_rels_rt <- as.data.frame(MB.rels.rt)
+MB_rels_rt <- gather(MB_rels_rt,Size,Rel)
+MB_rels_rt$Size <- rep(1:18,each = rep)*10
+
+# Boxplot
+
+boxplot2 <- MB_rels_rt %>%
+  ggplot(aes(x=as.factor(Size), y=Rel, fill = as.factor(Size))) +
+    geom_boxplot() +  
+    scale_fill_viridis(discrete = TRUE, alpha=0.6, option="A") +
+    geom_jitter(color="black", size=0.4, alpha=0.9) +
+   scale_y_continuous(limits = c(-0.35,1.10), breaks = n.breaks.rel) +
+    theme_ipsum() +
+    theme(legend.position="none", plot.title = element_text(size=11)) +
+    xlab("\nSample size") +
+    ylab("Reliablity - Random slopes\n") +
+    theme(axis.text = element_text(size = 20))
+
+# Lineplot
+MB_rels_rt <- MB_rels_rt %>%
+  group_by(Size) %>%
+  summarise(relsmean = mean(Rel))
+
+MB_ci <- as.data.frame(MB.ci)
+MB_ci <- gather(MB_ci,Size,Rel)
+MB_ci$Size <- rep(1:18,each = rep)*10
+MB_ci <- MB_ci %>%
+  group_by(Size) %>%
+  summarise(cimean = mean(Rel))
+MB_rels_rt$ci <- MB_ci$cimean
+
+g3 <- ggplot(MB_rels_rt,aes(Size,relsmean)) + geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  geom_linerange(aes(ymin = relsmean - ci/2,ymax = relsmean + ci/2),size = 1.2) +
+  theme_classic(base_size = 24) + xlab("Sample size") + ylab(expression(paste("Random slopes"))) +
+  scale_y_continuous(limits = c(-0.35,1.35), breaks = n.breaks.rel) +
+  geom_hline(yintercept = 0.2,linetype = 2)
+
+g4 <- ggplot(MB_rels_rt,aes(Size,ci)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  scale_y_continuous(limits = c(0.1,1.55), breaks = n.breaks.ci) +
+  theme_classic(base_size = 24) +
+  xlab("Sample size") +
+  ylab(expression(paste("Random slopes 95 % CI")))
+
+
+```
+
+## Create graph grid
+
+```{r}
+
+grid1 <- plot_grid(boxplot1, boxplot2, ncol = 1, labels = c("A", "B"))
+
+grid1
+
+ggsave("plots/boxplot.sample.size.last600.png", dpi = 800, height = 10, width = 14, bg = "white")
+
+
+grid2 <- plot_grid(g1, g3, g2, g4, ncol = 2, labels = c("A", "B"))
+
+grid2
+
+ggsave("plots/lineplot.sample.size.last600.png", dpi = 800, height = 10, width = 14, bg = "white")
+```
+

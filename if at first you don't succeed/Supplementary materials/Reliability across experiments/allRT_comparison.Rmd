@@ -1,0 +1,306 @@
+---
+title: "allRT_comparison"
+author: "Catia Oliveira"
+date: "17/06/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Functions
+
+```{r}
+#function for eliminating outlier datapoints
+
+remove_outliers <-  function(x) {
+  mn <- mean(x, na.rm = TRUE)
+  sd <- sd(x, na.rm = TRUE)
+  (x > mn + sd * 2.5) | (x < mn - sd * 2.5)
+}
+
+options(scipen=999)
+```
+
+
+# Libraries
+
+```{r warning=FALSE, message=FALSE}
+
+library(tidyverse)
+library(here)
+library(dplyr)
+library(lme4)
+library(lmerTest)
+library(ggplot2)
+```
+
+# SRT
+
+
+```{r echo = F, results = 'hide', warning=FALSE, message=FALSE}
+
+Data_study1 <- read.csv(here("Data.trimmed_study1.csv")) %>% select(Participant, Epoch, Session, Probability, RT, Trial)
+
+Data_study1$Study <- "Exp1"
+#demographics and language/literacy tasks
+Data_study2 <- read.csv(here("Study2_trimmed.csv")) %>% rename(Epoch = Block) %>% select(Participant, Epoch, Session, Probability, RT, Trial) %>% subset(Session <3)
+Data_study2$Study <- "Exp2"
+
+Data_study2$Probability[Data_study2$Probability == "2"] <- "Prob"
+Data_study2$Probability[Data_study2$Probability == "1"] <- "Improb"
+
+Data_study3 <- read.csv(here("Study3_trimmed.csv")) %>% rename(Epoch = Block) %>% select(Participant, Epoch, Session, Probability, Group, RT, Trial) %>% subset(Group == "noISI")
+Data_study3$Group <- NULL
+Data_study3$Study <- "Suppl exp"
+
+Data <- rbind(Data_study1, Data_study2, Data_study3) %>% 
+  mutate(logRT = log(RT))
+
+#Data <- Data %>% filter(Epoch > 2)
+
+```
+
+# Descriptive statistics
+
+```{r}
+
+RT <- Data %>%
+  group_by(Probability, Epoch, Session, Study) %>%
+  summarise(mean = mean(RT, na.rm = TRUE),
+            sd = sd(RT, na.rm = TRUE),
+            n = length(which(!is.na(RT)))) %>%
+  mutate(se = sd / sqrt(n),
+         lower.ci= mean - qt(1 - (0.05 / 2), n - 1) * se,
+         upper.ci = mean + qt(1 - (0.05 / 2), n - 1) * se)
+
+```
+
+## Plotting Response times
+
+``` {r echo = F, warning=FALSE,message=FALSE}
+
+RT <- RT %>% 
+  mutate(series = interaction(Probability, Study, sep = "_"))
+
+RT$Probability <- as.factor(RT$Probability)
+RT$Epoch <- as.factor(RT$Epoch)
+
+RT.plot <- ggplot(RT,
+       aes(x = Epoch, 
+           y = mean, group =series,
+           color = Study)) + 
+  geom_line(aes(linetype = Probability), position=position_dodge(0.05), size = 1) +
+  geom_errorbar(aes(ymin=lower.ci, ymax=upper.ci), width=.05, 
+                position=position_dodge(0.05),
+                show.legend = FALSE) +
+  facet_wrap(~ Session, scales="free") + coord_cartesian(ylim = c(380, 520)) +  theme_classic()
+ 
+RT.plot <- RT.plot + ylab("mean RT") + xlab("Epoch")
+print(RT.plot)
+ggsave("plots/procedural.learning.png", dpi = 1000, height = 8, width = 10, bg = "white")
+
+``` 
+
+# Individual differences
+
+
+```{r}
+
+Data2 <- subset(Data_study2, Session == 2)
+
+ggplot(data = Data2, aes(x = Trial, y = RT, color = Probability, group = Participant)) +
+     geom_line() +
+     facet_wrap(~ Participant+Probability) + 
+     theme_bw() + 
+     theme(panel.grid.major.x = element_blank(),
+       panel.grid.minor.x = element_blank(),
+       panel.grid.major.y = element_blank(),
+       panel.grid.minor.y = element_blank())
+```
+
+```{r}
+
+RT.S2 <- Data2 %>%
+  group_by(Participant, Probability, Epoch, Session) %>%
+  summarise(mean = mean(RT, na.rm = TRUE),
+            sd = sd(RT, na.rm = TRUE),
+            n = length(which(!is.na(RT)))) %>%
+  mutate(se = sd / sqrt(n),
+         lower.ci= mean - qt(1 - (0.05 / 2), n - 1) * se,
+         upper.ci = mean + qt(1 - (0.05 / 2), n - 1) * se)
+
+
+RT.S2$Probability <- as.factor(RT.S2$Probability)
+RT.S2$Epoch <- as.factor(RT.S2$Epoch)
+
+RT.plot2 <- ggplot(RT.S2,
+       aes(x = Epoch, 
+           y = mean, group = Probability, colour = Probability)) + 
+  geom_line(aes(linetype = Probability), position=position_dodge(0.05), size = 1) +
+  geom_errorbar(aes(ymin=lower.ci, ymax=upper.ci), width=.05, 
+                position=position_dodge(0.05),
+                show.legend = FALSE) +
+  facet_wrap(~ Participant, scales="free")  +  theme_classic()
+ 
+RT.plot2 <- RT.plot2 + ylab("mean RT") + xlab("Epoch")
+print(RT.plot2)
+```
+
+# Reliability
+
+```{r}
+
+Desc <- Data %>%
+  group_by(Participant, Session, Probability) %>%
+  summarise(mean = mean(RT))
+
+Wide <- Desc %>%
+  group_by(Participant) %>%
+  unite(Type, Probability, Session, sep = "_") %>%
+  spread(Type, mean)
+
+Wide <- mutate(Wide, Difference1 = Improb_1 - Prob_1,
+               Difference2 = Improb_2 - Prob_2,
+               Ratio1.1 = (Improb_1 - Prob_1)/((Improb_1 + Prob_1)/2),
+               Ratio1.2 = (Improb_2 - Prob_2)/((Improb_2 + Prob_2)/2),
+               Ratio2.1 = (Improb_1 - Prob_1)/Improb_1,
+               Ratio2.2 = (Improb_2 - Prob_2)/Improb_2)
+
+```
+# Learning effect comparison across studies
+
+```{r}
+
+Data$Probability[Data$Probability == "Prob"] <- "0"
+Data$Probability[Data$Probability == "Improb"] <- "1"
+
+model <- lmer(logRT ~ Probability*Study + (Probability|Participant),data= Data, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+summary(model)
+
+```
+
+# Random slopes
+
+```{r}
+
+Session1_Data <- subset(Data, Session == 1)
+Session2_Data <- subset(Data, Session == 2)
+
+#session 1
+model1 <- lmer(logRT ~ Probability*Study + (Probability|Participant),data= Session1_Data, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+df <- as.data.frame(coef(model1)$Participant) %>%
+  tibble::rownames_to_column("Participant") %>%
+  dplyr::rename(Diff1_slopes = Probability1) %>%
+  dplyr::select(Participant, Diff1_slopes)
+
+Wide <- merge(df, Wide, by = c("Participant"))
+
+# session 2
+model2 <- lmer(logRT ~ Probability*Study + (Probability|Participant),data= Session2_Data, REML=FALSE, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+
+df2 <- as.data.frame(coef(model2)$Participant) %>%
+  tibble::rownames_to_column("Participant") %>%
+  dplyr::rename(Diff2_slopes = Probability1) %>%
+  dplyr::select(Participant, Diff2_slopes)
+
+Wide <- merge(df2, Wide, by = c("Participant"))
+
+#remove outliers
+trim <- data.frame(Wide, stringsAsFactors = FALSE)
+
+#identify outlier datapoints
+cols <- paste0(c(names(Wide[-1])))
+out <- sapply(trim[cols], remove_outliers)
+trim[cols][out] <- NA
+Wide <- type.convert(trim)
+```
+
+# Test-retest reliability
+
+```{r}
+cor.test(Wide$Difference1, Wide$Difference2)
+cor.test(Wide$Ratio1.1, Wide$Ratio1.2)
+cor.test(Wide$Ratio2.1, Wide$Ratio2.2)
+cor.test(Wide$Diff1_slopes, Wide$Diff2_slopes)
+```
+
+# Correlations
+
+```{r}
+cor.matrix <- cor(Wide[-1], use = "pairwise.complete")
+
+write.csv(cor.matrix, "correlations.csv")
+```
+
+# single model lmer
+
+```{r}
+
+Wide.rs <- Data %>%
+  group_by(Participant) %>% 
+  summarise(Participant = Participant[1], Study = Study[1]) %>%
+  merge(Wide, by = "Participant") %>% 
+  select(Participant, Study, Diff1_slopes, Diff2_slopes)
+
+Long.rs <- gather(Wide.rs, Test_time, Diff_slopes, Diff1_slopes:Diff2_slopes, factor_key=TRUE) %>% 
+  mutate(Test_time = extract_numeric(Test_time))
+  
+  
+model <- lmer(Diff_slopes ~ Test_time + 
+                (Test_time | Study) + 
+                (1 | Participant), 
+              data=Long.rs, REML=FALSE)
+
+summary(model)
+
+
+model2 <- lmer(scale(Diff2_slopes) ~ scale(Diff1_slopes) + 
+                (1 | Study),
+              data=Wide.rs, REML=FALSE)
+
+summary(model2)
+```
+
+# Accuracy
+
+```{r}
+
+#experiment 2
+
+Data_study1.acc <- read.csv(here("Study1_alltrials.csv")) %>%
+  group_by(Participant, Session) %>% 
+  summarise(accuracy = sum(Accuracy)/n()) %>% 
+  ungroup() %>%
+  group_by(Session) %>% 
+  summarise(mean_acc = mean(accuracy), sd_acc = sd(accuracy))
+Data_study1.acc
+
+# experiment 2
+
+Data_study2.acc <- read.csv(here("Study2_alltrials.csv")) %>%
+  group_by(Participant, Session) %>% 
+  summarise(accuracy = sum(Accuracy)/n()) %>%
+  ungroup() %>%
+  group_by(Session) %>% 
+  summarise(mean_acc = mean(accuracy), sd_acc = sd(accuracy))
+Data_study2.acc
+
+#experiment 3
+
+Data_study3.acc <- read.csv(here("Study3_alltrials.csv")) %>%
+  mutate(Group = substr(as.character(Group), #add group column 
+                     start= 1, 
+                     stop= nchar(as.character(Group))-2)) %>% 
+  group_by(Participant, Session, Group) %>%
+  summarise(accuracy = sum(Accuracy)/n()) %>%
+  ungroup() %>%
+  group_by(Session, Group) %>% 
+  summarise(mean_acc = mean(accuracy), sd_acc = sd(accuracy))
+Data_study3.acc
+
+```
+
