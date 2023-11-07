@@ -287,6 +287,22 @@ write.csv(Res2_cor, "results/correlations.csv")
 
 write.csv(Res2_p, "results/correlations_pvalues.csv")
 
+## confidence intervals for correlations
+# select variables
+CI.cols <- c(c(4:8), c(24:38))
+df.CI <- Complete_data[CI.cols]
+
+# function to get lower credible interval between two variables
+lb.Pearson.CIcor = function(x,y) cor.test(df.CI[,x], df.CI[,y])$conf.int[1]
+up.Pearson.CIcor = function(x,y) cor.test(df.CI[,x], df.CI[,y])$conf.int[2]
+
+# Compute correlations for all pairwise variables of interest
+Pearson.CIcor <- expand.grid(V1 =names(df.CI), V2=names(df.CI))%>%
+  filter(V1 != V2) %>%   # keep pairs of names where v1 matches v2, but are not the same
+  mutate(lb.Pearson.CIcor = lb.Pearson.CIcor(V1,V2), up.Pearson.CIcor = up.Pearson.CIcor(V1,V2))   # for those pairs (only) obtain correlation value
+
+# high and low tau correlations
+
 median(na.omit(Complete_data$Ex_gaussian_PVT_tau))
 
 Complete_low_tau <- subset(Complete_data, Ex_gaussian_PVT_tau <= 59.54)
