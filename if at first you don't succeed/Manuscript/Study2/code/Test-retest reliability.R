@@ -291,15 +291,18 @@ write.csv(Res2_p, "results/correlations_pvalues.csv")
 
 # pick columns of interest
 CI.cols <- c(c(4:8), c(24:38))
-# get all combinations of columns taken two at a time; produces 2 x 10 matrix
-all_pw <- combn(CI.cols, 2)
 
-# apply function to all columns of all_pw matrix
-CI.Pearson.cor <- as.data.frame(apply(all_pw, 2, function(x)cor.test(Complete_data[[x[1]]], Complete_data[[x[2]]])$conf.int))
-nms <- apply(all_pw, 2, paste, collapse = "-")
-colnames(CI.Pearson.cor) <- nms
+data.CI = Complete_data[CI.cols]
 
-write.csv(CI.Pearson.cor, "CI.Pearson.cor.csv")
+Corr.CI = corr.test(data.CI,
+               use    = "pairwise",
+               method = "pearson",
+               adjust = "none",
+               ci     = TRUE)
+
+Corr.CI$ci
+
+write.csv(Corr.CI$ci, "results/CI.Pearson.cor.csv")
 
 # high and low tau correlations
 
