@@ -43,13 +43,13 @@ sim.overall.g <- ggplot(sim, aes(x=distance, colour = sequences, fill = sequence
   scale_color_manual(values=c("indianred", "mediumpurple1")) +
   scale_fill_manual(values=c("indianred", "mediumpurple1")) +
   geom_histogram(alpha=0.5, position="identity") + 
-  scale_x_continuous("\nLD distance", limits = c(200, 450)) +
-  scale_y_continuous("Frequency\n") +
+  scale_x_continuous("\nLD distance", limits = c(200, 450), expand = c(0,0)) +
+  scale_y_continuous("Frequency\n", expand = c(0, 0)) +
   theme_classic()
 
 sim.overall.g 
 
-ggsave("sim.overall.g.png", dpi = 800, height = 5, width = 7, bg = "white")
+ggsave("plots/sim.overall.g.png", dpi = 800, height = 5, width = 7, bg = "white")
 
 # random allocation
 
@@ -87,15 +87,15 @@ sim.overall.g.random.allo <- ggplot(sim.random.allo, aes(x=distance, colour = se
   scale_color_manual(values=c("indianred", "mediumpurple1")) +
   scale_fill_manual(values=c("indianred", "mediumpurple1")) +
   geom_histogram(alpha=0.5, position="identity") + 
-  scale_x_continuous("\nLD distance", limits = c(200, 450)) +
-  scale_y_continuous("Frequency\n") +
+  scale_x_continuous("\nLD distance", limits = c(200, 450), expand = c(0,0)) +
+  scale_y_continuous("Frequency\n", expand = c(0, 0)) +
   theme_classic()
 
 sim.overall.g.random.allo
 
-ggsave("sim.overall.g.random.allo.png", dpi = 800, height = 5, width = 7, bg = "white")
+ggsave("plots/sim.overall.g.random.allo.png", dpi = 800, height = 5, width = 7, bg = "white")
 
 grid.sim <- plot_grid(sim.overall.g,  sim.overall.g.random.allo, ncol = 1, labels = c("A","B"))
 
-ggsave("sim.grid.png", dpi = 800, height = 8, width = 7, bg = "white")
+ggsave("plots/sim.grid.png", dpi = 800, height = 8, width = 7, bg = "white")
 
