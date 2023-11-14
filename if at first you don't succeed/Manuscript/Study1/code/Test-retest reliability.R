@@ -13,6 +13,9 @@ library(BayesFactor)
 # Read in file
 Data <- read.csv("data/Data_final_RT.csv", header = TRUE)
 
+Data <- Data %>% 
+        mutate(Group = if_else(str_detect(Participant, "G01"), "Same", "Different"))
+
 Data$logRT <- log(Data$RT)
 
 Data <- subset(Data, Epoch > 2) # comment this line if overall reliability estimates are desired
