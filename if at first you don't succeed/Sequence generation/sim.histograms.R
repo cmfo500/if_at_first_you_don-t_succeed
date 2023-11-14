@@ -89,9 +89,6 @@ sim.overall.g.random.allo
 
 ggsave("plots/sim.overall.g.random.allo.png", dpi = 800, height = 5, width = 7, bg = "white")
 
-grid.sim <- plot_grid(sim.overall.g,  sim.overall.g.random.allo, ncol = 1, labels = c("A","B", "C"))
-
-ggsave("plots/sim.grid.png", dpi = 800, height = 8, width = 7, bg = "white")
 #--------------------------------------------------- Similarity for study 1 after random allocation
 
 sim.study1 <- read.csv("similarity distributions/study 1/Data.study1.csv") %>% 
@@ -111,5 +108,12 @@ sim.overall.g.study1 <- ggplot(sim.study1, aes(x=Distance, colour = sequences, f
 sim.overall.g.study1
 
 ggsave("plots/sim.overall.g.study1.png", dpi = 800, height = 5, width = 7, bg = "white")
+
+
+#--------------------- merge all plots
+
+grid.sim <- plot_grid(sim.overall.g,  sim.overall.g.random.allo, sim.overall.g.study1, ncol = 1, labels = c("A","B", "C"))
+
+ggsave("plots/sim.grid.png", dpi = 800, height = 10, width = 7, bg = "white")
 
 
