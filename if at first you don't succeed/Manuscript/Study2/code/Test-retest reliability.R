@@ -7,7 +7,7 @@ source("utils.R")
 
 listOfPackages <- c("BayesFactor","purrr", "lavaan", "lavaanPlot", "tidyr", "semPlot", "tidyverse", "dplyr", "lme4", "lmerTest",
                     "ggplot2", "readxl", "Hmisc", "sjPlot", "influence.ME", "BlandAltmanLeh", "reshape", "ggExtra", "olsrr",
-                    "psych", "fitdistrplus", "tidyr")
+                    "psych", "fitdistrplus", "tidyr", "cowplot")
 ipak(listOfPackages)
 
 # Add retimes
@@ -499,7 +499,7 @@ RT.plot <- RT.plot + ylab("mean RT") + xlab("\nEpoch")
 
 # Save plot
 print(RT.plot)
-ggsave("plots/Procedural.learning.S2.png", dpi = 1000, height = 5, width = 7, bg = "white")
+#ggsave("plots/Procedural.learning.S2.png", dpi = 1000, height = 5, width = 7, bg = "white")
 
 # Plotting procedural learning across sessions ------------------
 

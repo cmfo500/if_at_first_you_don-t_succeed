@@ -18,7 +18,7 @@ Data <- Data %>%
 
 Data$logRT <- log(Data$RT)
 
-Data <- subset(Data, Epoch > 2) # comment this line if overall reliability estimates are desired
+#Data <- subset(Data, Epoch > 2) # comment this line if overall reliability estimates are desired
 
 #separate sessions
 
@@ -417,7 +417,7 @@ RT.plot <- ggplot(RT, aes(x= Epoch, y= mean, group = Probability, color=Probabil
   theme_classic() +
   theme(text = element_text(size = 18))
   
-RT.plot <- RT.plot + ylab("mean RT") + xlab("Epoch")
+RT.plot <- RT.plot + ylab("mean RT") + xlab("\nEpoch")
 
 # Save plot
 print(RT.plot)
