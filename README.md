@@ -1,5 +1,5 @@
 
-code and data for paper "Reliability Of The Serial Reaction Time Task: If At First You Don't Succeed, Try Try Try Again" available at https://osf.io/fn9mw/
+code and data for paper "Reliability Of The Serial Reaction Time Task: If At First You Don't Succeed, Try Try Try Again" available at [https://osf.io/fn9mw/](https://pubmed.ncbi.nlm.nih.gov/38311604/)
 
 abstract:
 
